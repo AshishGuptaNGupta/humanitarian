@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Humanitarian_two</string>
+    <string name="title_activity_food_donation">Map</string>
+    <string name="title_activity_medicine_donation">Map</string>
+    <string name="title_activity_cloth_donation">Map</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

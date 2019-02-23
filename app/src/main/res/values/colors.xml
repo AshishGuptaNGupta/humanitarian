@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#c62828</color>
+    <color name="colorPrimaryDark">#8e0000</color>
+    <color name="colorPrimaryLight">#ff5f52</color>
+    <color name="complimentary">#28c6c6</color>
+    <color name="triadic">#c6c628</color>
+    <color name="colorAccent">#D81B60</color>
+</resources>

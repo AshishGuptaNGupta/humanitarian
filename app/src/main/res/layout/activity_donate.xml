@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".donate">
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="395dp"
+        android:layout_height="150dp"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/food"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:foreground="@drawable/groceries"
+            android:onClick="onClick"
+            android:scaleType="centerInside"
+            android:tag="food"
+            tools:layout_editor_absoluteX="167dp"
+            tools:layout_editor_absoluteY="88dp"
+            tools:srcCompat="@drawable/groceries" />
+
+        <ImageButton
+            android:id="@+id/cloth"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:foreground="@drawable/tshirt"
+            android:onClick="onClick"
+            android:scaleType="centerInside"
+            android:tag="cloth"
+            tools:layout_editor_absoluteX="38dp"
+            tools:layout_editor_absoluteY="88dp"
+            tools:srcCompat="@drawable/tshirt" />
+
+        <ImageButton
+            android:id="@+id/medicine"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:foreground="@drawable/medicine"
+            android:onClick="onClick"
+            android:scaleType="centerInside"
+            android:tag="medicine"
+            tools:layout_editor_absoluteX="296dp"
+            tools:layout_editor_absoluteY="112dp"
+            tools:srcCompat="@drawable/medicine" />
+    </LinearLayout>
+
+
+</android.support.constraint.ConstraintLayout>
