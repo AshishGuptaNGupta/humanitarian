@@ -9,7 +9,9 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -49,9 +51,9 @@ import java.util.Map;
 import retrofit2.http.Url;
 
 
-public class Profile extends AppCompatActivity {
+public class Profile extends Fragment {
     private FirebaseAuth mAuth=FirebaseAuth.getInstance();
-    FirebaseUser user;
+    FirebaseUser user=mAuth.getCurrentUser();
     TextView email;
     TextView name;
     boolean update=false;
@@ -62,12 +64,13 @@ public class Profile extends AppCompatActivity {
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static final int READ_REQUEST_CODE = 42;
     Map<String, Object> userMap = new HashMap<>();
+    Button signOut;
+
 
     public void performFileSearch(View view) {
 
 
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
         startActivityForResult(intent, READ_REQUEST_CODE);
     }
@@ -86,14 +89,14 @@ public class Profile extends AppCompatActivity {
                 uploadTask.addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception exception) {
-                        Toast.makeText(getApplicationContext(),"Upload fail",Toast.LENGTH_SHORT);
+                        Toast.makeText(getContext(),"Upload fail",Toast.LENGTH_SHORT);
                     }
                 }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         storageRef.getDownloadUrl();
                         profilePic.setImageURI(image);
-                        Toast.makeText(getApplicationContext(),"Upload complete",Toast.LENGTH_SHORT);
+                        Toast.makeText(getContext(),"Upload complete",Toast.LENGTH_SHORT);
                         UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                 .setPhotoUri(image)
                                 .build();
@@ -116,11 +119,11 @@ public class Profile extends AppCompatActivity {
 
         LayoutInflater inflater = getLayoutInflater();
         View layout = inflater.inflate(R.layout.profile_pic_display,
-                (ViewGroup) findViewById(R.id.custom_toast_container));
-        ImageView profilepic= findViewById(R.id.biggerProfilePic);
+                (ViewGroup) view.findViewById(R.id.custom_toast_container));
+        ImageView profilepic= view.findViewById(R.id.biggerProfilePic);
         Context context = profilePic.getContext();
         Picasso.with(context).load(image).into(profilePic);
-        Toast toast = new Toast(getApplicationContext());
+        Toast toast = new Toast(getContext());
         toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
         toast.setDuration(Toast.LENGTH_LONG);
         toast.setView(layout);
@@ -138,8 +141,10 @@ public class Profile extends AppCompatActivity {
             name.setEnabled(true);
             email.setEnabled(true);
             updateButton.setText("save");
-            update=true;
-
+            update = true;
+        }
+        if(update==false)
+        {
             UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                     .setDisplayName(name.getText().toString())
                     .build();
@@ -156,7 +161,7 @@ public class Profile extends AppCompatActivity {
             userMap.put("name",name.getText().toString());
             userMap.put("email",email.getText().toString());
             db.collection("users").document(user.getUid())
-                    .set(userMap)
+                    .update(userMap)
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
@@ -174,41 +179,81 @@ public class Profile extends AppCompatActivity {
 
     public void signOut(View view){
         mAuth.getInstance().signOut();
-        Intent intent=new Intent(this,MainActivity.class);
+        Intent intent=new Intent(getActivity(),MainActivity.class);
         startActivity(intent);
     }
+
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_profile);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.activity_profile, container, false);
+
         storage= FirebaseStorage.getInstance();
-        user = mAuth.getCurrentUser();
-        updateButton=findViewById(R.id.update);
-        profilePic=findViewById(R.id.profilePic);
-        email=findViewById(R.id.email);
-        name=findViewById(R.id.name);
+
+        updateButton=view.findViewById(R.id.update);
+        profilePic=view.findViewById(R.id.profilePic);
+        email=view.findViewById(R.id.email);
+        name=view.findViewById(R.id.name);
+
         name.setEnabled(false);
         email.setEnabled(false);
         //color
         name.setTextColor(Color.BLACK);
         email.setTextColor(Color.BLACK);
+        name.setText(user.getDisplayName());
+        email.setText(user.getEmail());
 
-        StorageReference storageRef = storage.getReference("profilepic/"+user.getUid()+"/"+user.getPhotoUrl().getLastPathSegment());
-        email.setText(user.getEmail().toString());
-        name.setText(user.getDisplayName().toString());
-        Log.i("url",storageRef.toString());
-        storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//        email.setText(user.getEmail().toString());
+//        name.setText(user.getDisplayName().toString());
+//        Log.i("url", storageRef.toString());
+        if(user.getPhotoUrl()!=null) {
+            StorageReference storageRef = storage.getReference("profilepic/" + user.getUid() + "/" + user.getPhotoUrl().getLastPathSegment());
+
+            storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                @Override
+                public void onSuccess(Uri uri) {
+                    Context context = profilePic.getContext();
+                    Picasso.with(context).load(uri).into(profilePic);
+
+                }
+            });
+        }
+
+
+        signOut=view.findViewById(R.id.signOut);
+        signOut.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onSuccess(Uri uri) {
-                Context context = profilePic.getContext();
-                Picasso.with(context).load(uri).into(profilePic);
-
+            public void onClick(View v) {
+                signOut(v);
             }
         });
 
+        updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                update(v);
+            }
+        });
 
+        profilePic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                performFileSearch(v);
+            }
+        });
 
-
-
+        return view;
     }
+
+//    @Override
+//    protected void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        setContentView(R.layout.activity_profile);
+//
+//
+//
+//
+//
+//
+//    }
 }

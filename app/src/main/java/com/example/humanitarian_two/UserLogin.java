@@ -22,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,13 +45,14 @@ public class UserLogin extends AppCompatActivity {
     TextView notify;
     TextView emailLabel;
     Map<String, Object> user = new HashMap<>();
-
+    ArrayList<String>following=new ArrayList<String>();
+    TextView username;
     public void signUp(View view){
         login=false;
         signUpButton.setTextColor(Color.WHITE);
         loginButton.setTextColor(Color.parseColor("#D3D3D3"));
         forgot.setVisibility(View.INVISIBLE);
-
+        username.setVisibility(View.VISIBLE);
     }
 
     public void login(View view){
@@ -58,6 +60,7 @@ public class UserLogin extends AppCompatActivity {
         signUpButton.setTextColor(Color.parseColor("#D3D3D3"));
         loginButton.setTextColor(Color.WHITE);
         forgot.setVisibility(View.VISIBLE);
+        username.setVisibility(View.INVISIBLE);
     }
 
     public void onEmergency(View view){
@@ -68,7 +71,7 @@ public class UserLogin extends AppCompatActivity {
     public void onClick(View view ){
         if(login) {
             try {
-                if(email.getText()==""||password.getText()=="")
+                if(email.getText()==""||password.getText()==""||username.getText()=="")
                 {
                     notify.setText("You forgot to enter email or passsword");
                 }else {
@@ -76,7 +79,7 @@ public class UserLogin extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                profile = new Intent(getApplicationContext(), donate.class);
+                                profile = new Intent(getApplicationContext(), Home.class);
                                 startActivity(profile);
                                 Log.i("Log", "Logged in ");
 
@@ -102,6 +105,9 @@ public class UserLogin extends AppCompatActivity {
                                 Log.i("SignUp", "Created user  ");
                                 currentUser=mAuth.getCurrentUser();
                                 user.put("email",email.getText().toString());
+                                user.put("uid",currentUser.getUid());
+                                user.put("following", following);
+                                user.put("username",username.getText().toString());
                                 db.collection("users").document(currentUser.getUid())
                                         .set(user)
                                         .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -176,6 +182,7 @@ public class UserLogin extends AppCompatActivity {
         setContentView(R.layout.activity_user_login);
         mAuth= FirebaseAuth.getInstance();
 
+        username=findViewById(R.id.username);
         linearLayout=findViewById(R.id.linearLayout);
         notify=findViewById(R.id.notifyLabel);
         emailLabel=findViewById(R.id.emailLabel);

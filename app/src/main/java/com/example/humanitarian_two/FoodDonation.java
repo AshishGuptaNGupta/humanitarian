@@ -34,15 +34,19 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -64,26 +68,36 @@ public class FoodDonation extends FragmentActivity implements OnMapReadyCallback
     Spinner spinner;
     ArrayList<String>ngoNames=new ArrayList<String>();
     ArrayAdapter adapter;
+    Timestamp tb=new Timestamp(new Date());
+
+
 
     public void onSubmit(View view){
+
         foodDonation.put("description",description.getText().toString());
         foodDonation.put("location",locationText.getText().toString());
         foodDonation.put("ngo",spinner.getSelectedItem().toString());
-            db.collection("foodDonations").document(user.getUid())
-                .set(foodDonation)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.i("doc", "success");
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
+        foodDonation.put("user",user.getUid());
+        foodDonation.put("time",tb.now().toDate());
+
+
+        Map<String, Object> post = new HashMap<>();
+        post.put("post", user.getDisplayName()+" donated Food "+" to end hunger ");
+        post.put("createdAt", tb.now());
+
+        WriteBatch batch = db.batch();
+        db.collection("foodDonations").document(tb.now().toDate().toString())
+                .set(foodDonation);
+        db.collection("posts").document(user.getUid())
+                .collection("userPosts").document(tb.now().toDate().toString())
+                .set(post);
+        batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.i("doc", "fail",e);
+            public void onComplete(@NonNull Task<Void> task) {
+                Intent intent=new Intent(getApplicationContext(),Home.class);
+                startActivity(intent);
             }
         });
-        Intent intent=new Intent(this,donate.class);
-        startActivity(intent);
 
     }
 

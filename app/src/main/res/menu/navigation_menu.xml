@@ -4,10 +4,13 @@
     <item android:id="@+id/home"
         android:title="home_menu"
         android:icon="@android:drawable/ic_btn_speak_now" />
-    <item android:id="@+id/donate"
-        android:title="donate_menu"
+    <item android:id="@+id/findPeople"
+        android:title="Find philanthropist"
         android:icon="@android:drawable/ic_menu_zoom" />
     <item android:id="@+id/profile"
+        android:title="Profile"
+        android:icon="@android:drawable/ic_menu_zoom" />
+    <item android:id="@+id/donate"
         android:title="donate_menu"
         android:icon="@android:drawable/ic_menu_zoom" />
 </menu>
