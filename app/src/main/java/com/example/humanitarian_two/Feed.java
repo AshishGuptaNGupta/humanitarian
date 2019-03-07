@@ -1,6 +1,7 @@
 package com.example.humanitarian_two;
 
 import android.graphics.Color;
+import android.net.Uri;
 import android.print.PrintAttributes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -33,11 +34,14 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import jp.wasabeef.picasso.transformations.CropCircleTransformation;
 
 public class Feed extends Fragment {
     Button postButton;
@@ -94,29 +98,7 @@ public class Feed extends Fragment {
         linearLayout=(LinearLayout)view.findViewById(R.id.feed_linearLayout);
         usersUid.add(currentUser.getUid());
 
-//        final DocumentReference docRef1=db.collection("users").document(currentUser.getUid());
-//        db.runTransaction(new Transaction.Function<Void>() {
-//            @Override
-//            public Void apply(Transaction transaction) throws FirebaseFirestoreException {
-//                DocumentSnapshot snapshot = transaction.get(docRef1);
-//                double newPopulation = snapshot.getDouble("population") + 1;
-//                transaction.update(docRef1, "population", newPopulation);
-//
-//
-//                return null;
-//            }
-//        }).addOnSuccessListener(new OnSuccessListener<Void>() {
-//            @Override
-//            public void onSuccess(Void aVoid) {
-//                Log.d(TAG, "Transaction success!");
-//            }
-//        })
-//                .addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception e) {
-//                        Log.w(TAG, "Transaction failure.", e);
-//                    }
-//                });
+
 
         db.collection("users").document(currentUser.getUid())
             .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -184,7 +166,7 @@ public class Feed extends Fragment {
                 public void onComplete(@NonNull Task<QuerySnapshot> task) {
                     for(String temp:usersUid) {
 
-                        db.collection("posts").limit(10).orderBy("createdAt")
+                        db.collection("posts").limit(10).orderBy("createdAt", Query.Direction.DESCENDING)
                                 .whereEqualTo("uid",temp)
                                 .get()
                                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -195,6 +177,7 @@ public class Feed extends Fragment {
                                                 Log.d(TAG, document.getId() + " => " + document.getData());
                                                 post = document.toObject(Post.class);
                                                 posts.add(post);
+
                                                 createPost(post);
 
                                             }
@@ -209,6 +192,35 @@ public class Feed extends Fragment {
         }
     }
     public void createPost(Post post) {
+        final ImageView dp=new ImageView(getContext());
+
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(200, 200);
+        dp.setLayoutParams(layoutParams);
+
+        final TextView username = new TextView(getContext());
+        db.collection("users").document(post.uid)
+                .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        String userDisplayName=document.get("name").toString();
+                        Uri photo=currentUser.getPhotoUrl();
+                        Picasso.with(getContext()).load(photo)
+                                .transform(new CropCircleTransformation())
+                                .into(dp);
+//
+                        username.setText(userDisplayName);
+
+                    } else {
+                        Log.d(TAG, "No such document");
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
+            }
+        });
 
         TextView postBody = new TextView(getContext());
 
@@ -223,6 +235,8 @@ public class Feed extends Fragment {
             LinearLayout card = new LinearLayout(getContext());
             card.setOrientation(LinearLayout.VERTICAL);
             card.setBackgroundResource(R.drawable.card);
+            card.addView(dp);
+            card.addView(username);
             card.addView(createdAt);
             card.addView(postBody);
             linearLayout.addView(card);

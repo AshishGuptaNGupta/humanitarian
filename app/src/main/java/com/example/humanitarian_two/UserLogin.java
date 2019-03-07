@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -71,9 +72,10 @@ public class UserLogin extends AppCompatActivity {
     public void onClick(View view ){
         if(login) {
             try {
-                if(email.getText()==""||password.getText()==""||username.getText()=="")
+                if(email.getText()==""||password.getText()=="")
                 {
-                    notify.setText("You forgot to enter email or passsword");
+                    Toast.makeText(this,"You forgot to enter email or passsword", Toast.LENGTH_LONG);
+
                 }else {
                     mAuth.signInWithEmailAndPassword(email.getText().toString(), password.getText().toString()).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                         @Override
@@ -96,36 +98,42 @@ public class UserLogin extends AppCompatActivity {
             }
         }
         else {
+            if(email.getText()==null||password.getText()==null||username.getText()==null)
+            {
+                Toast.makeText(getApplicationContext(),"You forgot to enter something", Toast.LENGTH_LONG);
 
-            mAuth.createUserWithEmailAndPassword(email.getText().toString(), password.getText().toString())
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()) {
-                                Log.i("SignUp", "Created user  ");
-                                currentUser=mAuth.getCurrentUser();
-                                user.put("email",email.getText().toString());
-                                user.put("uid",currentUser.getUid());
-                                user.put("following", following);
-                                user.put("username",username.getText().toString());
-                                db.collection("users").document(currentUser.getUid())
-                                        .set(user)
-                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void aVoid) {
-                                                Log.i("doc", "success");
-                                            }
-                                        }).addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Log.i("doc", "fail",e);
-                                    }
-                                });
-                            } else {
-                                Log.i("SignUp", "Not SignUp  ");
+            }
+            else {
+                mAuth.createUserWithEmailAndPassword(email.getText().toString(), password.getText().toString())
+                        .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if (task.isSuccessful()) {
+                                    Log.i("SignUp", "Created user  ");
+                                    currentUser = mAuth.getCurrentUser();
+                                    user.put("email", email.getText().toString());
+                                    user.put("uid", currentUser.getUid());
+                                    user.put("following", following);
+                                    user.put("username", username.getText().toString());
+                                    db.collection("users").document(currentUser.getUid())
+                                            .set(user)
+                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                @Override
+                                                public void onSuccess(Void aVoid) {
+                                                    Log.i("doc", "success");
+                                                }
+                                            }).addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            Log.i("doc", "fail", e);
+                                        }
+                                    });
+                                } else {
+                                    Log.i("SignUp", "Not SignUp  ");
+                                }
                             }
-                        }
-                    });
+                        });
+            }
 
         }
 

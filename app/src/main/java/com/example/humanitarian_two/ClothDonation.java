@@ -59,7 +59,7 @@ public class ClothDonation extends FragmentActivity implements OnMapReadyCallbac
     LocationListener locationListener;
     private FirebaseAuth mAuth = FirebaseAuth.getInstance();
     FirebaseFirestore db = FirebaseFirestore.getInstance();
-    FirebaseUser user= mAuth.getCurrentUser();
+    FirebaseUser currentUser= mAuth.getCurrentUser();
     Criteria criteria = new Criteria();
     Location userLocation;
     TextView locationText;
@@ -79,18 +79,18 @@ public class ClothDonation extends FragmentActivity implements OnMapReadyCallbac
         ClothDonation.put("description",description.getText().toString());
         ClothDonation.put("location",locationText.getText().toString());
         ClothDonation.put("ngo",spinner.getSelectedItem().toString());
-        ClothDonation.put("user",user.getUid());
+        ClothDonation.put("user",currentUser.getUid());
         ClothDonation.put("time",tb.now().toDate());
 
         Map<String, Object> post = new HashMap<>();
-        post.put("post", user.getDisplayName()+" donated Medicine "+" to needy people ");
+        post.put("post", currentUser.getDisplayName()+" donated Clothes "+" to keep people warm");
         post.put("createdAt", tb.now());
+        post.put("uid",currentUser.getUid());
 
         WriteBatch batch = db.batch();
         db.collection("ClothDonations").document(tb.now().toDate().toString())
                 .set(ClothDonation);
-        db.collection("posts").document(user.getUid())
-                .collection("userPosts").document(tb.now().toDate().toString())
+        db.collection("posts").document(tb.now().toDate().toString())
                 .set(post);
         batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override

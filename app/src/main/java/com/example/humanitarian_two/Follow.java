@@ -145,6 +145,7 @@ public class Follow extends Fragment {
                     docRef = db.collection("users").document(currentUser.getUid());
                     docRef.update("following", FieldValue.arrayUnion(users.get(position)));
 
+
                 } else {
 
                     docRef.update("following", FieldValue.arrayRemove(users.get(position)));
