@@ -84,9 +84,12 @@ public class UserLogin extends AppCompatActivity {
                                 profile = new Intent(getApplicationContext(), Home.class);
                                 startActivity(profile);
                                 Log.i("Log", "Logged in ");
+                                Toast.makeText(getApplicationContext(),"You logged in successfully", Toast.LENGTH_LONG);
 
                             } else {
                                 Log.i("Log", "Not Logged in ");
+                                Toast.makeText(getApplicationContext(),"Incorrect credentials", Toast.LENGTH_LONG);
+
                             }
                         }
                     });
@@ -125,10 +128,15 @@ public class UserLogin extends AppCompatActivity {
                                             }).addOnFailureListener(new OnFailureListener() {
                                         @Override
                                         public void onFailure(@NonNull Exception e) {
+                                            currentUser.delete();
                                             Log.i("doc", "fail", e);
                                         }
                                     });
                                 } else {
+                                    if(task.getException().getMessage()==null)
+                                        Toast.makeText(getApplicationContext(),task.getException().getMessage(), Toast.LENGTH_LONG);
+                                    else
+                                    Toast.makeText(getApplicationContext(),task.getException().getMessage(), Toast.LENGTH_LONG);
                                     Log.i("SignUp", "Not SignUp  ");
                                 }
                             }

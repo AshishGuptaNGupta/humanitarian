@@ -158,6 +158,7 @@ public class Profile extends Fragment {
     public void update(View view) {
         if(update){
             update=false;
+            username.setEnabled(false);
             name.setEnabled(false);
             email.setEnabled(false);
             updateButton.setText("update");
@@ -219,17 +220,18 @@ public class Profile extends Fragment {
         name=view.findViewById(R.id.name);
         username=view.findViewById(R.id.userName);
 
-
+        username.setEnabled(false);
         name.setEnabled(false);
         email.setEnabled(false);
         //color
+        username.setTextColor(Color.BLACK);
         name.setTextColor(Color.BLACK);
         email.setTextColor(Color.BLACK);
         name.setText(user.getDisplayName());
         email.setText(user.getEmail());
 
         db.collection("users").document(user.getUid())
-                .get()
+                  .get()
                 .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<DocumentSnapshot> task) {

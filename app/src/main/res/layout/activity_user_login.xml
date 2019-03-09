@@ -43,7 +43,7 @@
         android:id="@+id/name"
         android:layout_width="wrap_content"
         android:layout_height="40dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="48dp"
         android:layout_marginBottom="8dp"
         android:height="15dp"
         android:background="#9ED1E5"
@@ -55,18 +55,17 @@
         android:text="test1@gmail.com"
         android:textColor="@android:color/white"
         android:textColorHint="@android:color/white"
-        app:layout_constraintBottom_toTopOf="@+id/password"
+        app:layout_constraintBottom_toBottomOf="@+id/notifyLabel"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-        app:layout_constraintVertical_bias="0.335" />
+        app:layout_constraintVertical_bias="0.0" />
 
     <EditText
         android:id="@+id/password"
         android:layout_width="wrap_content"
         android:layout_height="40dp"
-        android:layout_marginTop="296dp"
+        android:layout_marginTop="20dp"
         android:height="15dp"
         android:background="#9ED1E5"
         android:ems="10"
@@ -78,9 +77,8 @@
         android:textColor="@android:color/white"
         android:textColorHint="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="@+id/notifyLabel" />
 
     <TextView
         android:id="@+id/forgot"
@@ -164,13 +162,14 @@
         android:id="@+id/username"
         android:layout_width="wrap_content"
         android:layout_height="40dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="20dp"
 
         android:layout_marginBottom="8dp"
         android:background="#9ED1E5"
         android:ems="10"
         android:hint="username"
         android:inputType="textPersonName"
+        android:textColor="@android:color/white"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@+id/submit"
         app:layout_constraintEnd_toEndOf="parent"
