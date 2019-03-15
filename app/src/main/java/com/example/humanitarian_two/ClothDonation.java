@@ -67,6 +67,7 @@ public class ClothDonation extends FragmentActivity implements OnMapReadyCallbac
     TextView description;
     Spinner spinner;
     ArrayList<String> ngoNames=new ArrayList<String>();
+
     ArrayAdapter adapter;
 
     Timestamp tb=new Timestamp(new Date());
@@ -78,6 +79,7 @@ public class ClothDonation extends FragmentActivity implements OnMapReadyCallbac
     public void onSubmit(View view){
         ClothDonation.put("description",description.getText().toString());
         ClothDonation.put("location",locationText.getText().toString());
+
         ClothDonation.put("ngo",spinner.getSelectedItem().toString());
         ClothDonation.put("user",currentUser.getUid());
         ClothDonation.put("time",tb.now().toDate());
@@ -90,12 +92,13 @@ public class ClothDonation extends FragmentActivity implements OnMapReadyCallbac
         WriteBatch batch = db.batch();
         db.collection("ClothDonations").document(tb.now().toDate().toString())
                 .set(ClothDonation);
-        db.collection("posts").document(tb.now().toDate().toString())
+        db.collection("posts").document()
                 .set(post);
         batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Intent intent=new Intent(getApplicationContext(),Home.class);
+                intent.putExtra("subject","users");
                 startActivity(intent);
             }
         });
@@ -137,10 +140,8 @@ public class ClothDonation extends FragmentActivity implements OnMapReadyCallbac
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 try {
-                                    Ngo ngo = document.toObject(Ngo.class);
-                                    ngoNames.add(ngo.name);
+                                    ngoNames.add(document.get("username").toString());
 
-                                    Log.d("2", ngo.name);
                                 }
                                 catch (Exception e){
                                     System.out.println(e.getMessage());

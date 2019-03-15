@@ -19,10 +19,14 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 public class Home extends AppCompatActivity {
     Intent intent;
+    String subject;
     private FirebaseAuth mAuth=FirebaseAuth.getInstance();
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseUser user=mAuth.getCurrentUser();
     public void donate(View view){
         Intent intent = new Intent(this,donate.class);
@@ -49,7 +53,17 @@ public class Home extends AppCompatActivity {
 
         }
     }
+    private void initFCM(){
+        String token = FirebaseInstanceId.getInstance().getToken();
+        Log.i ("initFCM: token: " ,token);
+        sendRegistrationToServer(token);
 
+    }
+    private void sendRegistrationToServer(String token) {
+        db.collection("users").document(user.getUid()).update("token",token);
+
+
+    }
 
 
     private BottomNavigationView.OnNavigationItemSelectedListener onNavigationItemSelectedListener=
@@ -61,7 +75,10 @@ public class Home extends AppCompatActivity {
                         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                         switch (menuItem.getItemId()) {
                             case R.id.profile:
-                                selectedFragment = new Profile();
+                                if(subject.equals("users"))
+                                selectedFragment = new UserProfile();
+                                else
+                                    selectedFragment = new Profile();
                                 loadFragment(selectedFragment);
                                 return true;
                             case R.id.findPeople:
@@ -69,7 +86,10 @@ public class Home extends AppCompatActivity {
                                 loadFragment(selectedFragment);
                                 return true;
                             case R.id.donate:
+                                if(subject.equals("users"))
                                 selectedFragment = new donate();
+                                else
+                                    selectedFragment = new Donations();
                                 loadFragment(selectedFragment);
                                 return true;
                             case R.id.home:
@@ -88,13 +108,15 @@ public class Home extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        Intent intent=getIntent();
+        subject=intent.getStringExtra("subject");
+        Log.i("subject",subject);
 
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.home_frame, new Feed());
-        transaction.addToBackStack(null);
-        transaction.commit();
+        initFCM();
+
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(onNavigationItemSelectedListener);
+
     }
     private void loadFragment(Fragment fragment) {
 

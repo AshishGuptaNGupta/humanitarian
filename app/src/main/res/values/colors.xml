@@ -4,9 +4,9 @@
     <color name="colorPrimaryDark">#78002e</color>
     <color name="colorPrimaryLight">#e35183</color>
     <color name="complimentary">#28c6c6</color>
-    <color name="colorSecondary">#cddc39</color>
-    <color name="colorSecondaryDark">#99aa00</color>
-    <color name="colorSecondaryLight">#ffff6e</color>
+    <color name="colorSecondary">#AFB42B</color>
+    <color name="colorSecondaryDark">#7c8500</color>
+    <color name="colorSecondaryLight">#e4e65e</color>
     <color name="triadic">#c6c628</color>
     <color name="colorAccent">#D81B60</color>
 </resources>

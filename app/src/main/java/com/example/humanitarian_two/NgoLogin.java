@@ -1,6 +1,6 @@
 package com.example.humanitarian_two;
 
-import android.content.Context;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.support.annotation.NonNull;
@@ -16,16 +16,15 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import androidx.browser.browseractions.BrowserActionsIntent;
 
 
 public class  NgoLogin extends AppCompatActivity {
@@ -39,11 +38,12 @@ public class  NgoLogin extends AppCompatActivity {
     Button loginButton;
     TextView forgot;
     LinearLayout linearLayout;
-    Intent profile;
+    Intent intent;
     Button submit;
     TextView notify;
     TextView emailLabel;
     TextView name;
+    TextView username;
     Map<String, Object> user = new HashMap<>();
 
     public void signUp(View view){
@@ -51,6 +51,8 @@ public class  NgoLogin extends AppCompatActivity {
         signUpButton.setTextColor(Color.WHITE);
         loginButton.setTextColor(Color.parseColor("#D3D3D3"));
         forgot.setVisibility(View.INVISIBLE);
+        name.setVisibility(View.VISIBLE);
+        username.setVisibility(View.VISIBLE);
 
     }
 
@@ -59,6 +61,8 @@ public class  NgoLogin extends AppCompatActivity {
         signUpButton.setTextColor(Color.parseColor("#D3D3D3"));
         loginButton.setTextColor(Color.WHITE);
         forgot.setVisibility(View.VISIBLE);
+        username.setVisibility(View.INVISIBLE);
+        name.setVisibility(View.INVISIBLE);
     }
 
     public void onEmergency(View view){
@@ -69,23 +73,37 @@ public class  NgoLogin extends AppCompatActivity {
     public void onClick(View view ){
         if(login) {
             try {
-                if(email.getText()==""||password.getText()=="")
+                if(email.getText().toString().isEmpty()||password.getText().toString().isEmpty())
                 {
                     notify.setText("You forgot to enter email or passsword");
                 }else {
-                    mAuth.signInWithEmailAndPassword(email.getText().toString(), password.getText().toString()).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    db.collection("ngos").whereEqualTo("email",email.getText().toString())
+                            .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                         @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()) {
-                                profile = new Intent(getApplicationContext(), Home.class);
-                                startActivity(profile);
-                                Log.i("Log", "Logged in ");
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if(task.isSuccessful())
+                                if(task.getResult().isEmpty()) {
+                                    email.setError("this is not ngo email");
+                                }else
+                                {
+                                    mAuth.signInWithEmailAndPassword(email.getText().toString(), password.getText().toString()).addOnCompleteListener(new Activity(), new OnCompleteListener<AuthResult>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<AuthResult> task) {
+                                            if (task.isSuccessful()) {
+                                                intent = new Intent(getApplicationContext(), Home.class);
+                                                intent.putExtra("subject","ngos");
+                                                startActivity(intent);
+                                                Log.i("Log", "Logged in ");
 
-                            } else {
-                                Log.i("Log", "Not Logged in ");
-                            }
+                                            } else {
+                                                Log.i("Log", "Not Logged in ");
+                                            }
+                                        }
+                                    });
+                                }
                         }
                     });
+
                 }
             }
             catch (Exception e)
@@ -105,12 +123,17 @@ public class  NgoLogin extends AppCompatActivity {
                                 user.put("email",email.getText().toString());
                                 user.put("name",name.getText().toString());
                                 user.put("uid",currentUser.getUid());
+                                user.put("username",username.getText().toString());
+                                user.put("verified",false);
                                 db.collection("ngos").document(currentUser.getUid())
                                         .set(user)
                                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                                             @Override
                                             public void onSuccess(Void aVoid) {
                                                 Log.i("doc", "success");
+                                                intent = new Intent(getApplicationContext(), Home.class);
+                                                intent.putExtra("subject","ngos");
+                                                startActivity(intent);
                                             }
                                         }).addOnFailureListener(new OnFailureListener() {
                                     @Override
@@ -120,6 +143,7 @@ public class  NgoLogin extends AppCompatActivity {
                                 });
                             } else {
                                 Log.i("SignUp", "Not SignUp  ");
+                                currentUser.delete();
                             }
                         }
                     });
@@ -183,10 +207,13 @@ public class  NgoLogin extends AppCompatActivity {
         notify=findViewById(R.id.notifyLabel);
         emailLabel=findViewById(R.id.emailLabel);
         emailLabel.setVisibility(View.INVISIBLE);
-        name=findViewById(R.id.name);
+        username=findViewById(R.id.ngoUsername);
+        name=findViewById(R.id.ngoName);
+        name.setVisibility(View.INVISIBLE);
         notify.setVisibility(View.INVISIBLE);
-        email=findViewById(R.id.email);
+        email=findViewById(R.id.ngoEmail);
         password=findViewById(R.id.password);
+        username.setVisibility(View.INVISIBLE);
         submit=findViewById(R.id.submit);
         currentUser = mAuth.getCurrentUser();
         signUpButton=findViewById(R.id.signUp);

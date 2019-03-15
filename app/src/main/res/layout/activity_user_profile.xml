@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Profile">
+    tools:context=".UserProfile">
 
     <Button
         android:id="@+id/signOut"
@@ -155,26 +155,10 @@
 
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/verifyBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/textView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="You are not verified. To be verified , click below button." />
-
-            <Button
-                android:id="@+id/verifyButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="verify" />
-        </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/genderBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -187,12 +171,6 @@
                 android:textSize="24sp"
                 tools:layout_editor_absoluteX="20dp"
                 tools:layout_editor_absoluteY="266dp" />
-
-            <Spinner
-                android:id="@+id/spinner2"
-                android:layout_width="match_parent"
-                android:layout_height="47dp"
-                android:layout_weight="1" />
 
         </LinearLayout>
 

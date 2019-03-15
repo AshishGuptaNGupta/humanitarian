@@ -21,6 +21,12 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void onEmergency(View view){
+        Intent intent=new Intent(this,Emergency.class);
+        startActivity(intent);
+
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

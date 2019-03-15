@@ -86,7 +86,7 @@ public class MedicineDonation extends FragmentActivity implements OnMapReadyCall
         post.put("uid",currentUser.getUid());
 
         WriteBatch batch = db.batch();
-        db.collection("medicineDonations").document(tb.now().toDate().toString())
+        db.collection("medicineDonations").document()
                 .set(medicineDonation);
         db.collection("posts").document(tb.now().toDate().toString())
                 .set(post);
@@ -94,6 +94,7 @@ public class MedicineDonation extends FragmentActivity implements OnMapReadyCall
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Intent intent=new Intent(getApplicationContext(),Home.class);
+                intent.putExtra("subject","users");
                 startActivity(intent);
             }
         });
@@ -137,10 +138,7 @@ public class MedicineDonation extends FragmentActivity implements OnMapReadyCall
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 try {
-                                    Ngo ngo = document.toObject(Ngo.class);
-                                    ngoNames.add(ngo.name);
-
-                                    Log.d("2", ngo.name);
+                                    ngoNames.add(document.get("username").toString());
                                 }
                                 catch (Exception e){
                                     System.out.println(e.getMessage());

@@ -13,14 +13,17 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,13 +47,14 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import jp.wasabeef.picasso.transformations.CropCircleTransformation;
 
 
-public class Profile extends Fragment {
+public class UserProfile extends Fragment {
     private FirebaseAuth mAuth=FirebaseAuth.getInstance();
     FirebaseUser user=mAuth.getCurrentUser();
     TextView email;
@@ -70,8 +74,8 @@ public class Profile extends Fragment {
     File compressed;
     String verified;
     LinearLayout nameBox;
-    LinearLayout verifyBox;
-    Button verifyButton;
+    LinearLayout genderBox;
+    LinearLayout parent;
 
     public void performFileSearch(View view) {
 
@@ -194,10 +198,80 @@ public class Profile extends Fragment {
         startActivity(intent);
     }
 
+    public void selectGender(){
+        ArrayList<String>genders=new ArrayList<>();
+        genders.add("Male");
+        genders.add("Female");
+        genders.add("Agender");
+        final Spinner gender=new Spinner(getContext());
+        gender.setPrompt("Select Gender");
+
+        ArrayAdapter spinnerAdapter=
+                new ArrayAdapter(getContext(),android.R.layout.simple_spinner_item,genders);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        gender.setAdapter(spinnerAdapter);
+        genderBox.addView(gender);
+
+        Button saveGender=new Button(getContext());
+        saveGender.setText("save");
+        saveGender.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                db.collection("users").document(user.getUid())
+                        .update("gender",gender.getSelectedItem().toString());
+            }
+        });
+        genderBox.addView(saveGender);
+    }
+
+    public void getBloodInfo(Map bloodInfo){
+        LinearLayout bloodBox= new LinearLayout(getContext());
+        bloodBox.setOrientation(LinearLayout.HORIZONTAL);
+        TextView label= new TextView(getContext());
+        label.setText("Blood Group:");
+        label.setTextSize(TypedValue.COMPLEX_UNIT_DIP,24);
+        bloodBox.addView(label);
+        TextView type= new TextView(getContext());
+        type.setText(bloodInfo.get("bloodGroup").toString());
+        type.setTextSize(TypedValue.COMPLEX_UNIT_DIP,24);
+        bloodBox.addView(type);
+
+        Button button =new Button(getContext());
+        button.setText("Change");
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent BloodActivity=new Intent(getContext(),BloodActivity.class);
+                startActivity(BloodActivity);
+            }
+        });
+        bloodBox.addView(button);
+        parent.addView(bloodBox);
+    }
+    public void setBloodInfo(){
+        LinearLayout bloodBox= new LinearLayout(getContext());
+        bloodBox.setOrientation(LinearLayout.VERTICAL);
+        TextView msg= new TextView(getContext());
+        msg.setText("You are not registered as Blood donor. To Register yourself click below");
+        Button button =new Button(getContext());
+        button.setText("Register as blood donor");
+        bloodBox.addView(msg);
+        bloodBox.addView(button);
+        parent.addView(bloodBox);
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent BloodActivity=new Intent(getContext(),BloodActivity.class);
+                startActivity(BloodActivity);
+            }
+        });
+
+    }
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.activity_profile, container, false);
+        View view = inflater.inflate(R.layout.activity_user_profile, container, false);
         storage= FirebaseStorage.getInstance();
         updateButton=view.findViewById(R.id.update);
         profilePic=view.findViewById(R.id.profilePic);
@@ -205,16 +279,12 @@ public class Profile extends Fragment {
         name=view.findViewById(R.id.profileName);
         username=view.findViewById(R.id.profileUsername);
         nameBox=view.findViewById(R.id.nameBox);
-        verifyBox=view.findViewById(R.id.verifyBox);
-        verifyButton=view.findViewById(R.id.verifyButton);
+        genderBox=view.findViewById(R.id.genderBox);
+        parent=view.findViewById(R.id.container);
 
-        verifyButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent=new Intent(getContext(),VerificationPage.class);
-                startActivity(intent);
-            }
-        });
+
+
+
 
 
         username.setEnabled(false);
@@ -229,22 +299,35 @@ public class Profile extends Fragment {
 
 
 
-        db.collection("ngos").document(user.getUid()).
-        get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+        db.collection("users").document(user.getUid()).
+                get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
                     if (document.exists()) {
                         username.setText(document.get("username").toString());
-                            verified=document.get("verified").toString();
-                            if(verified.equalsIgnoreCase("true"))
-                            {
-                                ImageView verify_icon=new ImageView(getContext());
-                                verify_icon.setImageResource(R.drawable.ic_verified);
-                                nameBox.addView(verify_icon);
-                                verifyBox.setVisibility(View.INVISIBLE);
-                            }
+                        if(document.get("gender")!=null&&document.get("gender")!="")
+                        {
+                            TextView genderText=new TextView(getContext());
+                            genderText.setText(document.get("gender").toString());
+                            genderText.setTextSize(TypedValue.COMPLEX_UNIT_DIP,24);
+                            genderText.setTextColor(Color.BLACK);
+                            genderBox.addView(genderText);
+                        }
+                        else
+                        {
+                            selectGender();
+                        }
+                        if(document.get("bloodInfo")!=null)
+                        {
+                           getBloodInfo((Map<String,String>)document.get("bloodInfo"));
+                        }
+                        else
+                        {
+
+                            setBloodInfo();
+                        }
                     }
                 } else {
                     Log.d("problem", "get failed with ", task.getException());

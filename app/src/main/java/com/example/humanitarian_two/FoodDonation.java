@@ -88,13 +88,13 @@ public class FoodDonation extends FragmentActivity implements OnMapReadyCallback
         WriteBatch batch = db.batch();
         db.collection("foodDonations").document(tb.now().toDate().toString())
                 .set(foodDonation);
-        db.collection("posts").document(user.getUid())
-                .collection("userPosts").document(tb.now().toDate().toString())
+        db.collection("posts").document()
                 .set(post);
         batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Intent intent=new Intent(getApplicationContext(),Home.class);
+                intent.putExtra("subject","users");
                 startActivity(intent);
             }
         });
@@ -135,10 +135,9 @@ public class FoodDonation extends FragmentActivity implements OnMapReadyCallback
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                 try {
-                                    Ngo ngo = document.toObject(Ngo.class);
-                                    ngoNames.add(ngo.name);
 
-                                    Log.d("2", ngo.name);
+                                    ngoNames.add(document.get("username").toString());
+
                                 }
                                 catch (Exception e){
                                     System.out.println(e.getMessage());
@@ -154,15 +153,7 @@ public class FoodDonation extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {

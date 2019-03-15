@@ -2,6 +2,8 @@ package com.example.humanitarian_two;
 
 import com.google.firebase.Timestamp;
 
+import java.lang.reflect.Array;
+
 public class Post {
     String post;
     Timestamp createdAt;

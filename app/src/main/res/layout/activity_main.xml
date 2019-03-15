@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#c62828"
+
     tools:context=".MainActivity">
 
 
@@ -12,12 +12,12 @@
         android:id="@+id/button"
         android:layout_width="272dp"
         android:layout_height="57dp"
-        android:layout_marginTop="500dp"
+        android:layout_marginTop="408dp"
         android:background="@color/triadic"
         android:onClick="userLogin"
         android:text="Login for user"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.503"
+        app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -25,15 +25,29 @@
         android:id="@+id/button1"
         android:layout_width="272dp"
         android:layout_height="57dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="88dp"
+        android:layout_marginTop="36dp"
         android:background="@color/triadic"
         android:onClick="ngoLogin"
         android:text="Login for NGOs"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button" />
+
+    <Button
+        android:id="@+id/emergency"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="8dp"
+        android:background="@android:color/holo_red_light"
+        android:onClick="onEmergency"
+        android:text="Emergency Button"
+        android:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.503"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button"
-        app:layout_constraintVertical_bias="0.761" />
+        app:layout_constraintTop_toBottomOf="@+id/button1"
+        app:layout_constraintVertical_bias="0.034" />
 </android.support.constraint.ConstraintLayout>

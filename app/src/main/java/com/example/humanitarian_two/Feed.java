@@ -28,6 +28,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 
 import jp.wasabeef.picasso.transformations.CropCircleTransformation;
 
@@ -58,7 +60,7 @@ public class Feed extends Fragment {
     CollectionReference collectionRef;
     ArrayList<String> usersUid=new ArrayList<String>();
     Post post;
-
+    String currentUser_userName;
     public void post()
     {
 
@@ -70,7 +72,7 @@ public class Feed extends Fragment {
 
 
         db.collection("posts")
-                .document(tb.now().toDate().toString())
+                .document()
                 .set(post)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
@@ -97,6 +99,7 @@ public class Feed extends Fragment {
         postText=view.findViewById(R.id.postText);
         linearLayout=(LinearLayout)view.findViewById(R.id.feed_linearLayout);
         usersUid.add(currentUser.getUid());
+        Log.i("current uid",usersUid.get(0));
 
 
 
@@ -108,7 +111,8 @@ public class Feed extends Fragment {
                     DocumentSnapshot document = task.getResult();
                     if (document.exists()) {
                         userFollowing= (ArrayList<String>)document.get("following");
-                        Log.i("userFollowingList",userFollowing.get(1));
+                        currentUser_userName=document.get("username").toString();
+
 
                     }
 
@@ -142,56 +146,90 @@ public class Feed extends Fragment {
 
 
     public void getUid(){
+       if(userFollowing!=null) {
+           for (String username : userFollowing) {
+               db.collection("users")
+                       .whereEqualTo("username", username)
+                       .get()
+                       .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                           @Override
+                           public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                               if (task.isSuccessful()) {
+                                   for (QueryDocumentSnapshot document : task.getResult()) {
 
-        for(String username:userFollowing){
-            db.collection("users")
-                    .whereEqualTo("username", username)
-                    .get()
-                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                        @Override
-                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                            if (task.isSuccessful()) {
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-
-                                    usersUid.add(document.get("uid").toString());
+                                       usersUid.add(document.get("uid").toString());
 
 
-                                }
-                            } else {
-                                Log.d(TAG, "Error getting documents: ", task.getException());
-                            }
-                        }
-                    }).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                @Override
-                public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                    for(String temp:usersUid) {
+                                   }
+                               } else {
+                                   Log.d(TAG, "Error getting documents: ", task.getException());
+                               }
+                           }
+                       }).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                   @Override
+                   public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                       for (String temp : usersUid) {
 
-                        db.collection("posts").limit(10).orderBy("createdAt", Query.Direction.DESCENDING)
-                                .whereEqualTo("uid",temp)
-                                .get()
-                                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                        if (task.isSuccessful()) {
-                                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                                Log.d(TAG, document.getId() + " => " + document.getData());
-                                                post = document.toObject(Post.class);
-                                                posts.add(post);
+                           db.collection("posts").limit(10).orderBy("createdAt", Query.Direction.DESCENDING)
+                                   .whereEqualTo("uid", temp)
+                                   .get()
+                                   .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                                       @Override
+                                       public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                                           if (task.isSuccessful()) {
+                                               for (QueryDocumentSnapshot document : task.getResult()) {
+                                                   post = document.toObject(Post.class);
+                                                   posts.add(post);
+                                                   if (document.get("likes") != null) {
+                                                       ArrayList<String> likes = new ArrayList<String>();
+                                                       likes = (ArrayList<String>) document.get("likes");
+                                                       createPost(post, document.getId(), likes);
+                                                   }
+                                                   createPost(post, document.getId(), null);
 
-                                                createPost(post);
 
-                                            }
-                                        } else {
-                                            Log.d(TAG, "Error getting documents: ", task.getException());
-                                        }
-                                    }
-                                });
-                    }
-                }
-            });
-        }
+                                               }
+                                           } else {
+                                               Log.d(TAG, "Error getting documents: ", task.getException());
+                                           }
+                                       }
+                                   });
+                       }
+                   }
+               });
+           }
+       }else {
+           for (String temp : usersUid) {
+
+               db.collection("posts").limit(20).orderBy("createdAt", Query.Direction.DESCENDING)
+                       .whereEqualTo("uid", temp)
+                       .get()
+                       .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                           @Override
+                           public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                               if (task.isSuccessful()) {
+                                   for (QueryDocumentSnapshot document : task.getResult()) {
+                                       post = document.toObject(Post.class);
+                                       posts.add(post);
+                                       if (document.get("likes") != null) {
+                                           ArrayList<String> likes = new ArrayList<String>();
+                                           likes = (ArrayList<String>) document.get("likes");
+                                           createPost(post, document.getId(), likes);
+                                       }
+                                       createPost(post, document.getId(), null);
+
+
+                                   }
+                               } else {
+                                   Log.d(TAG, "Error getting documents: ", task.getException());
+                               }
+                           }
+                       });
+           }
+       }
+
     }
-    public void createPost(Post post) {
+    public void createPost(Post post, final String postId,ArrayList<String> likes) {
         final ImageView dp=new ImageView(getContext());
 
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(200, 200);
@@ -239,6 +277,37 @@ public class Feed extends Fragment {
             card.addView(username);
             card.addView(createdAt);
             card.addView(postBody);
+
+            //button code
+            LinearLayout buttonContainer= new LinearLayout(getContext());
+            buttonContainer.setOrientation(LinearLayout.HORIZONTAL);
+            final Button like=new Button(getContext());
+            if(likes!=null && likes.contains(currentUser_userName))
+                like.setBackgroundResource(R.drawable.ic_heartcolor);
+            else
+            like.setBackgroundResource(R.drawable.ic_heartbw);
+            like.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Map<String, Object> user = new HashMap<>();
+
+                    db.collection("posts").document(postId).update(
+                            "likes", FieldValue.arrayUnion(currentUser_userName))
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    like.setBackgroundResource(R.drawable.ic_heartcolor);
+                                }
+                            });
+                }
+            });
+            Button comment=new Button(getContext());
+            Button share=new Button(getContext());
+            buttonContainer.addView(like);
+        buttonContainer.addView(comment);
+        buttonContainer.addView(share);
+        card.addView(buttonContainer);
+
             linearLayout.addView(card);
         }
 

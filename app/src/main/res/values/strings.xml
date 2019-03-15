@@ -1,9 +1,12 @@
 <resources>
-    <string name="app_name">Humanitarian_two</string>
+    <string name="app_name">Bequest</string>
     <string name="title_activity_food_donation">Map</string>
     <string name="title_activity_medicine_donation">Map</string>
     <string name="title_activity_cloth_donation">Map</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="default_notification_channel_id" translatable="false">"follow"</string>
+    <string name="direct_message">direct_message</string>
+    <string name="data_type">data_type</string>
 </resources>
