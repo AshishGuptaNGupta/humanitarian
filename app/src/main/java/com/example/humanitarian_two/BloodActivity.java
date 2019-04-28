@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -32,11 +33,12 @@ public class BloodActivity extends AppCompatActivity {
     Map<String,Object> bloodInfo=new HashMap<>();
     TextView address;
     FirebaseFirestore db= FirebaseFirestore.getInstance();
+    boolean checked;
 
     public void onRadioButtonClicked(View view) {
 
 
-        boolean checked = ((RadioButton) view).isChecked();
+         checked = ((RadioButton) view).isChecked();
 
 
         switch(view.getId()) {
@@ -65,13 +67,15 @@ public class BloodActivity extends AppCompatActivity {
             public void onClick(View v) {
                 bloodInfo.put("bloodGroup",bloodType.getSelectedItem());
 
-                    if(address.getText()==null||address.getText().toString()=="")
+                    if(address.getText().toString().isEmpty())
                     {
-                        address.setError("You forgot to fill this");
+                        Toast.makeText(getApplicationContext(),"You forgot to enter address",Toast.LENGTH_LONG).show();
                     }
                     else if(bloodType.getSelectedItem()=="Select blood Type"){
-                        bloodType.setOutlineAmbientShadowColor(Color.RED);
+                        Toast.makeText(getApplicationContext(),"You forgot to select Blood Group",Toast.LENGTH_LONG).show();
 
+                }else if(!checked){
+                        Toast.makeText(getApplicationContext(),"You forgot specify weather you want to be donor or not",Toast.LENGTH_LONG).show();
                 }
                     else {
                         db.collection("users").document(FirebaseAuth.getInstance().getCurrentUser().getUid())

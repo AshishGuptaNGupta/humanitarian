@@ -1,24 +1,51 @@
 package com.example.humanitarian_two;
 
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.media.RingtoneManager;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import static com.example.humanitarian_two.Home.MyPREFERENCES;
 
 public class Notification extends FirebaseMessagingService {
 
     private static final String TAG = "MyFirebaseMsgService";
     private static final int BROADCAST_NOTIFICATION_ID = 1;
+    String dataType;
+    SharedPreferences sharedpreferences;
+    String subject;
 
     @Override
+    public void onNewToken(String s) {
+        super.onNewToken(s);
+
+        sharedpreferences = getSharedPreferences(MyPREFERENCES, Context.MODE_PRIVATE);
+
+        subject=sharedpreferences.getString("subject",null);
+
+        if(FirebaseAuth.getInstance().getCurrentUser()!=null) {
+            Log.d(TAG, "sendRegistrationToServer: sending token to server: " + s);
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            if(subject.equals("users"))
+            db.collection("users").document(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                    .update("token", s);
+            else if(subject.equals("ngos"))
+            {
+                db.collection("ngos").document(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                        .update("token", s);
+            }
+        }
+    }
+
     public void onDeletedMessages() {
         super.onDeletedMessages();
     }
@@ -35,25 +62,69 @@ public class Notification extends FirebaseMessagingService {
         String notificationTitle = "";
         String notificationData = "";
         try{
-            notificationData = remoteMessage.getData().toString();
-            notificationTitle = remoteMessage.getNotification().getTitle();
-            notificationBody = remoteMessage.getNotification().getBody();
+//            notificationData = remoteMessage.getData().toString();
+            if (remoteMessage.getNotification() != null) {
+                notificationBody = remoteMessage.getNotification().getBody();
+                notificationTitle = remoteMessage.getNotification().getTitle();
+            }
+
+
+
         }catch (NullPointerException e){
             Log.e(TAG, "onMessageReceived: NullPointerException: " + e.getMessage() );
         }
-        Log.d(TAG, "onMessageReceived: data: " + notificationData);
+//        Log.d(TAG, "onMessageReceived: data: " + notificationData);
         Log.d(TAG, "onMessageReceived: notification body: " + notificationBody);
         Log.d(TAG, "onMessageReceived: notification title: " + notificationTitle);
 
 
-        String dataType = remoteMessage.getData().get(getString(R.string.data_type));
-            if(dataType.equals(getString(R.string.direct_message))){
+         dataType = remoteMessage.getData().get(getString(R.string.data_type));
+            if(dataType.equals("follow")){
             Log.d(TAG, "onMessageReceived: new incoming message.");
+
             String title = remoteMessage.getData().get("title");
+                Log.i(TAG, title);
             String message = remoteMessage.getData().get("message");
             String messageId = remoteMessage.getData().get("messageId");
             sendMessageNotification(title, message, messageId);
         }
+        else if(dataType.equals("donation")){
+            Log.d(TAG, "onMessageReceived: new incoming message.");
+
+            String title = remoteMessage.getData().get("title");
+            Log.i(TAG, title);
+            String message = remoteMessage.getData().get("message");
+            String messageId = remoteMessage.getData().get("messageId");
+            sendMessageNotification(title, message, messageId);
+        }
+        else if(dataType.equals("volunteerRequest")){
+                Log.d(TAG, "onMessageReceived: new incoming message.");
+
+                String title = remoteMessage.getData().get("title");
+                Log.i(TAG, title);
+                String message = remoteMessage.getData().get("message");
+                String messageId = remoteMessage.getData().get("messageId");
+                sendMessageNotification(title, message, messageId);
+            }
+
+            else if(dataType.equals("requestAccepted")){
+                Log.d(TAG, "onMessageReceived: new incoming message.");
+
+                String title = remoteMessage.getData().get("title");
+                Log.i(TAG, title);
+                String message = remoteMessage.getData().get("message");
+                String messageId = remoteMessage.getData().get("messageId");
+                sendMessageNotification(title, message, messageId);
+            }
+            else if(dataType.equals("donationDelivered")){
+                Log.d(TAG, "onMessageReceived: new incoming message.");
+
+                String title = remoteMessage.getData().get("title");
+                Log.i(TAG, title);
+                String message = remoteMessage.getData().get("message");
+                String messageId = remoteMessage.getData().get("messageId");
+                sendMessageNotification(title, message, messageId);
+            }
     }
 
     /**
@@ -66,55 +137,103 @@ public class Notification extends FirebaseMessagingService {
 
         //get the notification id
         int notificationId = buildNotificationId(messageId);
+        NotificationCompat.Builder builder=null;
+        if(dataType.equals("follow")){
+            NotificationChannelForFollow();
+             builder = new NotificationCompat.Builder(this, "follow")
+                    .setSmallIcon(R.drawable.ic_donation)
+                    .setContentTitle(title)
+                    .setContentText(title)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+        }
+        else if(dataType.equals("donation")){
+            NotificationChannelForDonation();
+            builder = new NotificationCompat.Builder(this, "donation")
+                    .setSmallIcon(R.drawable.ic_donation)
+                    .setContentTitle(title)
+                    .setContentText(message)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH);
+        }else if(dataType.equals("volunteerRequest"))
+        {
+            NotificationChannelForVolunteer();
+            builder = new NotificationCompat.Builder(this, "volunteerRequest")
+                    .setSmallIcon(R.drawable.ic_donation)
+                    .setContentTitle(title)
+                    .setContentText(message)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH);
+        }
+        else if(dataType.equals("requestAccepted")||dataType.equals("donationDelivered"))
+        {
+            NotificationChannelForVolunteer();
+            builder = new NotificationCompat.Builder(this, "donation")
+                    .setSmallIcon(R.drawable.ic_donation)
+                    .setContentTitle(title)
+                    .setContentText(message)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH);
+        }
 
-        // Instantiate a Builder object.
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this,
-                getString(R.string.default_notification_channel_id));
-        // Creates an Intent for the Activity
-        Intent pendingIntent = new Intent(this, Home.class);
-        pendingIntent.putExtra("subject","users");
-        // Sets the Activity to start in a new, empty task
-        pendingIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        // Creates the PendingIntent
-        PendingIntent notifyPendingIntent =
-                PendingIntent.getActivity(
-                        this,
-                        0,
-                        pendingIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
 
-        //add properties to the builder
-        builder.setSmallIcon(R.drawable.ic_donation)
-                .setLargeIcon(BitmapFactory.decodeResource(getApplicationContext().getResources(),
-                        R.drawable.ic_donation))
-                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .setContentTitle(title)
-                .setColor(Color.BLUE)
-                .setAutoCancel(true)
-                //.setSubText(message)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
-                .setOnlyAlertOnce(true);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
 
-        builder.setContentIntent(notifyPendingIntent);
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        mNotificationManager.notify(notificationId, builder.build());
+// notificationId is a unique int for each notification that you must define
+        notificationManager.notify(notificationId, builder.build());
 
     }
 
+    private void NotificationChannelForFollow() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name ="follow";
+            String description = "follow";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("follow", name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+    private void NotificationChannelForDonation() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name ="donation";
+            String description = "Sends notification when new donation is made or other alers realted to donation";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel("donation", name, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+
+    private void NotificationChannelForVolunteer() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name ="volunteer Request";
+            String description = "Sends notification when selected for volunteer";
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel channel = new NotificationChannel("volunteerRequest", name, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
 
     private int buildNotificationId(String id){
         Log.d(TAG, "buildNotificationId: building a notification id.");
-
-        int notificationId = 0;
-        for(int i = 0; i < 9; i++){
-            notificationId = notificationId + id.charAt(0);
-        }
         Log.d(TAG, "buildNotificationId: id: " + id);
-        Log.d(TAG, "buildNotificationId: notification id:" + notificationId);
-        return notificationId;
+//        int notificationId = Integer.parseInt(id);
+//        for(int i = 0; i < 9; i++){
+//            notificationId = notificationId + id.charAt(0);
+//        }
+
+//        Log.d(TAG, "buildNotificationId: notification id:" + notificationId);
+        return 10;
     }
 
 }

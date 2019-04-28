@@ -18,6 +18,12 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ListView;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -105,7 +111,6 @@ public class Follow extends Fragment {
                     DocumentSnapshot document = task.getResult();
                     if (document.exists()) {
                         userNames = (ArrayList<String>) document.get("following");
-//                        Log.i("a",userNames.get(0));
 
                         onCall();
 
@@ -146,6 +151,7 @@ public class Follow extends Fragment {
                     docRef.update("following", FieldValue.arrayUnion(users.get(position)));
 
 
+
                 } else {
 
                     docRef.update("following", FieldValue.arrayRemove(users.get(position)));
@@ -155,7 +161,31 @@ public class Follow extends Fragment {
         return view;
     }
 
+//    void sendNotification(){
+//        RequestQueue queue = Volley.newRequestQueue(c);
+//        String url ="https://us-central1-everystepcounts-a0d73.cloudfunctions.net/followNotification?"+
+//                "following="+following+"&"+"follower="+currentUser_username;
+//        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+//                new Response.Listener<String>() {
+//                    @Override
+//                    public void onResponse(String response) {
+//                        Log.i("HttpRequest","sent");
+//
+//                        // Display the first 500 characters of the response string.
+////                            textView.setText("Response is: "+ response.substring(0,500));
+//                    }
+//                }, new Response.ErrorListener() {
+//            @Override
+//            public void onErrorResponse(VolleyError error) {
+//                Log.i("HttpRequestError","Not able to send");
+////                    textView.setText("That didn't work!");
+//            }
+//        });
 
+// Add the request to the RequestQueue.
+//        queue.add(stringRequest);
+//
+//    }
 }
 
 

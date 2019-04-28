@@ -1,10 +1,12 @@
 package com.example.humanitarian_two;
 
+import android.support.annotation.NonNull;
+
 import com.google.firebase.Timestamp;
 
 import java.lang.reflect.Array;
 
-public class Post {
+public class Post implements Comparable<Post>{
     String post;
     Timestamp createdAt;
     String uid;
@@ -42,7 +44,10 @@ public class Post {
     public Post(){}
 
 
-
+    @Override
+    public int compareTo(@NonNull Post comparePost) {
+        return comparePost.createdAt.compareTo(this.createdAt);
+    }
 
 
 

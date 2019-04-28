@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorSecondaryLight"
-    tools:context=".NgoLogin">
+    tools:context=".Ngo.NgoLogin">
 
     <LinearLayout
         android:id="@+id/linearLayout"

@@ -1,4 +1,4 @@
-package com.example.humanitarian_two;
+package com.example.humanitarian_two.Ngo;
 
 public class Ngo {
     String uid;

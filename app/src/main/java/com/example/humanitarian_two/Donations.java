@@ -1,5 +1,6 @@
 package com.example.humanitarian_two;
 
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -18,10 +19,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class Donations extends Fragment {
     ListView listView;
@@ -32,9 +35,28 @@ public class Donations extends Fragment {
     ArrayList<DonationModel>donations=new ArrayList<>();
     static CustomAdapter adapter;
 
+    void getMedicineDonations(){
+        db.collection("medicineDonations").whereEqualTo("ngo",currentNgoUsername).orderBy("time", Query.Direction.DESCENDING).get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if(task.isSuccessful()){
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                donations.add(document.toObject(DonationModel.class));
+                                Log.i("donation",document.get("description").toString());
+                            }
+                        }
+                    }
+                }).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+              getFoodDonations();
+            }
+        });
+    }
 
-    public void getDonations(){
-        db.collection("foodDonations").whereEqualTo("ngo",currentNgoUsername).get()
+    void getFoodDonations(){
+        db.collection("foodDonations").whereEqualTo("ngo",currentNgoUsername).orderBy("time", Query.Direction.DESCENDING).get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -48,27 +70,12 @@ public class Donations extends Fragment {
                 }).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                adapter.notifyDataSetChanged();
+                getClothesDonations();
             }
         });
-        db.collection("ClothDonations").whereEqualTo("ngo",currentNgoUsername).get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if(task.isSuccessful()){
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                donations.add(document.toObject(DonationModel.class));
-                                Log.i("donation",document.get("description").toString());
-                            }
-                        }
-                    }
-                }).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                adapter.notifyDataSetChanged();
-            }
-        });
-        db.collection("medicineDonations").whereEqualTo("ngo",currentNgoUsername).get()
+    }
+    void getClothesDonations(){
+        db.collection("ClothDonations").whereEqualTo("ngo",currentNgoUsername).orderBy("time", Query.Direction.DESCENDING).get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
@@ -86,6 +93,7 @@ public class Donations extends Fragment {
             }
         });
     }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -108,7 +116,7 @@ public class Donations extends Fragment {
         }).addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                getDonations();
+               getMedicineDonations();
 
             }
         });
@@ -122,4 +130,20 @@ public class Donations extends Fragment {
 
         return view;
     }
+
+//    class getDonations extends AsyncTask<Void,Void,Void>{
+//
+//        @Override
+//        protected Void doInBackground(Void... voids) {
+//            getFoodDonations();
+//            getClothesDonations();
+//            getMedicineDonations();
+//            return null;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(Void aVoid) {
+//            adapter.notifyDataSetChanged();
+//        }
+//    }
 }

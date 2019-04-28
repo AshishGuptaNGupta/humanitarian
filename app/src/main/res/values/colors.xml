@@ -9,4 +9,5 @@
     <color name="colorSecondaryLight">#e4e65e</color>
     <color name="triadic">#c6c628</color>
     <color name="colorAccent">#D81B60</color>
+    <color name="black">#000000</color>
 </resources>

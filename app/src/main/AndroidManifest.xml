@@ -7,6 +7,8 @@
          location permissions for the 'MyLocation' functionality.
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -15,14 +17,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".BloodActivity"></activity>
-        <activity android:name=".UserProfile" />
+        <activity android:name=".VolunteerRequest"></activity>
+        <activity android:name=".VolunteerNearMe" />
+        <activity android:name=".Ngo.EditNgoProfile" />
+        <activity android:name=".User.EditUserProfile" />
+        <activity android:name=".Ngo.NgoProfile" />
+        <activity android:name=".BloodActivity" />
+        <activity android:name=".User.UserProfile" />
 
-        <service android:name=".MyFirebaseInstanceIDService">
-            <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
-            </intent-filter>
-        </service>
+        <service android:name=".LocationService" />
         <service android:name=".Notification">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -33,8 +36,8 @@
         <activity android:name=".Donations" />
         <activity android:name=".Feed" />
         <activity android:name=".Follow" />
-        <activity android:name=".NgoLogin" />
-        <activity android:name=".UserLogin" />
+        <activity android:name=".Ngo.NgoLogin" />
+        <activity android:name=".User.UserLogin" />
         <activity android:name=".Emergency" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.

@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
 
     android:background="@color/colorSecondaryLight"
-    tools:context=".UserLogin">
+    tools:context=".User.UserLogin">
 
     <LinearLayout
         android:id="@+id/linearLayout"

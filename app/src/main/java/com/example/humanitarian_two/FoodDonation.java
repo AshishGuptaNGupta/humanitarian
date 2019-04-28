@@ -2,7 +2,9 @@ package com.example.humanitarian_two;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
@@ -22,7 +24,14 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -38,12 +47,15 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ServerValue;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -72,33 +84,71 @@ public class FoodDonation extends FragmentActivity implements OnMapReadyCallback
 
 
 
-    public void onSubmit(View view){
 
+    public void onSubmit(View view){
+        DocumentReference ref = db.collection("foodDonations").document();
+        String myId = ref.getId();
+        final String descriptionText=description.getText().toString();
+        final String userDisplayName=user.getDisplayName();
+        final String ngo=spinner.getSelectedItem().toString();
         foodDonation.put("description",description.getText().toString());
         foodDonation.put("location",locationText.getText().toString());
         foodDonation.put("ngo",spinner.getSelectedItem().toString());
         foodDonation.put("user",user.getUid());
         foodDonation.put("time",tb.now().toDate());
+        foodDonation.put("donationId",myId);
+        foodDonation.put("donationType","food donation");
 
 
         Map<String, Object> post = new HashMap<>();
         post.put("post", user.getDisplayName()+" donated Food "+" to end hunger ");
         post.put("createdAt", tb.now());
+        post.put("uid",user.getUid());
 
         WriteBatch batch = db.batch();
-        db.collection("foodDonations").document(tb.now().toDate().toString())
+        db.collection("foodDonations").document()
                 .set(foodDonation);
         db.collection("posts").document()
                 .set(post);
         batch.commit().addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
-                Intent intent=new Intent(getApplicationContext(),Home.class);
-                intent.putExtra("subject","users");
-                startActivity(intent);
+
+            sendNotification(descriptionText,userDisplayName,ngo,"food donation");
+                locationManager.removeUpdates(locationListener);
+                createDialog();
+
+
             }
         });
 
+    }
+
+
+
+    public void sendNotification(String descrition,String user,String ngo,String type){
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+        String url ="https://us-central1-humanitarian-dbe38.cloudfunctions.net/donationNotification?"+
+                "description="+descrition+"&"+"user="+user+"&"+"ngo="+ngo+"&"+"type="+type;
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.i("HttpRequest","sent");
+
+                        // Display the first 500 characters of the response string.
+//                            textView.setText("Response is: "+ response.substring(0,500));
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.i("HttpRequestError","Not able to send");
+//                    textView.setText("That didn't work!");
+            }
+        });
+
+// Add the request to the RequestQueue.
+        queue.add(stringRequest);
     }
 
     @Override
@@ -152,6 +202,31 @@ public class FoodDonation extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    public  void createDialog(){
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Select mode of delivery");
+                alertDialogBuilder.setPositiveButton("Self ",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface arg0, int arg1) {
+                                finish();
+                            }
+                        });
+
+        alertDialogBuilder.setNegativeButton("Find volunteer", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent=new Intent(getApplicationContext(),VolunteerNearMe.class);
+                        Log.i("latitude from food",Double.toString(userLocation.getLatitude()));
+                        Log.i("longitude from food",Double.toString(userLocation.getLongitude()));
+                        intent.putExtra("donation", (Serializable) foodDonation);
+                        intent.putExtra("location",userLocation);
+                        startActivity(intent);
+                    }
+                });
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
 
 
     @SuppressLint("MissingPermission")

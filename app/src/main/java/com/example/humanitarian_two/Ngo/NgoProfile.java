@@ -1,17 +1,15 @@
-package com.example.humanitarian_two;
-
+package com.example.humanitarian_two.Ngo;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
+import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -24,7 +22,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
+import com.example.humanitarian_two.MainActivity;
+import com.example.humanitarian_two.R;
+import com.example.humanitarian_two.User.EditUserProfile;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -39,39 +39,36 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 
-import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import jp.wasabeef.picasso.transformations.CropCircleTransformation;
 
+import static com.example.humanitarian_two.Home.sharedpreferences;
 
-public class Profile extends Fragment {
-    private FirebaseAuth mAuth=FirebaseAuth.getInstance();
+
+public class NgoProfile extends Fragment {
+    private FirebaseAuth mAuth= FirebaseAuth.getInstance();
     FirebaseUser user=mAuth.getCurrentUser();
     TextView email;
 
     TextView name;
-    boolean update=false;
-    Button updateButton;
+    ImageButton updateButton;
     FirebaseStorage storage;
     ImageButton profilePic;
     Uri image;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static final int READ_REQUEST_CODE = 42;
-    Map<String, Object> userMap = new HashMap<>();
     Button signOut;
     TextView username;
-    File original;
-    File compressed;
-    String verified;
-    LinearLayout nameBox;
-    LinearLayout verifyBox;
-    Button verifyButton;
+    TextView bio;
+    Uri compressedUri;
+    StorageReference currentPicStorageRef;
+    View parent;
+    boolean verified;
+
+
+
 
     public void performFileSearch(View view) {
 
@@ -81,6 +78,23 @@ public class Profile extends Fragment {
         startActivityForResult(intent, READ_REQUEST_CODE);
     }
 
+    public Uri getImageUri(Context inContext) {
+        Context c=getContext();
+        Bitmap bitmap=null;
+        String path=null;
+        try {
+            bitmap = MediaStore.Images.Media.getBitmap( c.getContentResolver(),image);
+            Bitmap inImage =bitmap;
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            inImage.compress(Bitmap.CompressFormat.JPEG, 50, bytes);
+            path= MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, image.getLastPathSegment(), null);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Uri.parse(path);
+    }
+
     public void onActivityResult(int requestCode, int resultCode,
                                  Intent resultData) {
         if (requestCode == READ_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
@@ -88,11 +102,11 @@ public class Profile extends Fragment {
             if (resultData != null) {
                 image = resultData.getData();
 
+                compressedUri=getImageUri(getContext());
 
-
-                Log.i("Image", "Uri: " + image.toString());
+                Log.i("Image", "Uri: " + compressedUri.toString());
                 final StorageReference storageRef = storage.getReference("profilepic/"+user.getUid()+"/"+image.getLastPathSegment());
-                Task uploadTask = storageRef.putFile(image);
+                Task uploadTask = storageRef.putFile(compressedUri);
 
 
 
@@ -105,7 +119,12 @@ public class Profile extends Fragment {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         storageRef.getDownloadUrl();
-                        profilePic.setImageURI(image);
+                        Picasso.with(getContext()).load(compressedUri)
+                                .transform(new CropCircleTransformation()).into(profilePic);
+                        if(currentPicStorageRef!=null){
+                            currentPicStorageRef.delete();
+                        }
+
                         Toast.makeText(getContext(),"Upload complete",Toast.LENGTH_SHORT);
                         UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                                 .setPhotoUri(image)
@@ -119,6 +138,14 @@ public class Profile extends Fragment {
                                         }
                                     }
                                 });
+
+                        storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                db.collection("ngos").document(user.getUid()).update("profilePicUrl",uri.toString());
+                            }
+                        });
+
                     }
                 });
 
@@ -132,7 +159,8 @@ public class Profile extends Fragment {
                 (ViewGroup) view.findViewById(R.id.custom_toast_container));
         ImageView profilepic= view.findViewById(R.id.biggerProfilePic);
         Context context = profilePic.getContext();
-        Picasso.with(context).load(image).into(profilePic);
+        Picasso.with(context).load(image)
+                .transform(new CropCircleTransformation()).into(profilePic);
         Toast toast = new Toast(getContext());
         toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
         toast.setDuration(Toast.LENGTH_LONG);
@@ -141,131 +169,103 @@ public class Profile extends Fragment {
     }
 
     public void update(View view) {
-        if(update){
-            update=false;
-            username.setEnabled(false);
-            name.setEnabled(false);
-            email.setEnabled(false);
-            updateButton.setText("update");
-        }
-        else {
-            name.setEnabled(true);
-            email.setEnabled(true);
-            updateButton.setText("save");
-            update = true;
-        }
-        if(update==false)
-        {
-            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                    .setDisplayName(name.getText().toString())
-                    .build();
-
-            user.updateProfile(profileUpdates)
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            if (task.isSuccessful()) {
-                                Log.i("update", "User profile updated.");
-                            }
-                        }
-                    });
-            userMap.put("name",name.getText().toString());
-            userMap.put("email",email.getText().toString());
-            db.collection("users").document(user.getUid())
-                    .update(userMap)
-                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            Log.i("doc", "success");
-                        }
-                    }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.i("doc", "fail",e);
-                }
-            });
-
-        }
+        Intent intent= new Intent(getContext(), EditNgoProfile.class);
+        startActivity(intent);
     }
 
     public void signOut(View view){
+        SharedPreferences.Editor editor=sharedpreferences.edit();
+        editor.clear();
+        editor.commit();
         mAuth.getInstance().signOut();
-        Intent intent=new Intent(getActivity(),MainActivity.class);
+        Intent intent=new Intent(getActivity(), MainActivity.class);
         startActivity(intent);
     }
+
+    //    public String getRealPathFromURI(Context context, Uri contentUri) {
+//        Cursor cursor = null;
+//        try {
+//            String[] proj = { MediaStore.Images.Media.DATA };
+//            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+//            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+//            cursor.moveToFirst();
+//            return cursor.getString(column_index);
+//        } finally {
+//            if (cursor != null) {
+//                cursor.close();
+//            }
+//        }
+//    }
+
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.activity_profile, container, false);
+        View view = inflater.inflate(R.layout.activity_ngo_profile, container, false);
         storage= FirebaseStorage.getInstance();
+
+
         updateButton=view.findViewById(R.id.update);
         profilePic=view.findViewById(R.id.profilePic);
-        email=view.findViewById(R.id.profileEmail);
-        name=view.findViewById(R.id.profileName);
-        username=view.findViewById(R.id.profileUsername);
-        nameBox=view.findViewById(R.id.nameBox);
-        verifyBox=view.findViewById(R.id.verifyBox);
-        verifyButton=view.findViewById(R.id.verifyButton);
 
-        verifyButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent=new Intent(getContext(),VerificationPage.class);
-                startActivity(intent);
-            }
-        });
+        final LinearLayout nameBox=view.findViewById(R.id.nameBox);
+        email=view.findViewById(R.id.emailPro);
+        name=view.findViewById(R.id.namePro);
+        username=view.findViewById(R.id.userNamePro);
+        bio=view.findViewById(R.id.bio);
+        name=view.findViewById(R.id.namePro);
 
 
-        username.setEnabled(false);
-        name.setEnabled(false);
-        email.setEnabled(false);
-        //color
-        username.setTextColor(Color.BLACK);
-        name.setTextColor(Color.BLACK);
-        email.setTextColor(Color.BLACK);
-        name.setText(user.getDisplayName());
+        parent=view.findViewById(R.id.container);
+
+
         email.setText(user.getEmail());
+        name.setText(user.getDisplayName());
+
 
 
 
         db.collection("ngos").document(user.getUid()).
-        get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
                     if (document.exists()) {
                         username.setText(document.get("username").toString());
-                            verified=document.get("verified").toString();
-                            if(verified.equalsIgnoreCase("true"))
-                            {
-                                ImageView verify_icon=new ImageView(getContext());
-                                verify_icon.setImageResource(R.drawable.ic_verified);
-                                nameBox.addView(verify_icon);
-                                verifyBox.setVisibility(View.INVISIBLE);
-                            }
+                        if(document.get("bio")!=null)
+                            bio.setText(document.get("bio").toString());
+                        if(document.get("verified")!=null)
+                            verified=document.getBoolean("verified");
+                        if(verified) {
+                            ImageView badge=new ImageView(getContext());
+                            badge.setImageResource(R.drawable.ic_correct);
+                            nameBox.addView(badge);
+                        }
+
+
                     }
                 } else {
-                    Log.d("problem", "get failed with ", task.getException());
+                    Toast.makeText(getContext(),task.getException().getMessage(),Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
         if(user.getPhotoUrl()!=null) {
-            StorageReference storageRef = storage.getReference("profilepic/" + user.getUid() + "/" + user.getPhotoUrl().getLastPathSegment());
+            Log.i("photo uri",user.getPhotoUrl().getLastPathSegment());
+            currentPicStorageRef = storage.getReference("profilepic/" + user.getUid() + "/" + user.getPhotoUrl().getLastPathSegment());
 
-            storageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            currentPicStorageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                 @Override
                 public void onSuccess(Uri uri) {
                     Context context = profilePic.getContext();
                     Picasso.with(getContext()).load(uri)
                             .transform(new CropCircleTransformation())
                             .into(profilePic);
-
                 }
             });
         }
+
 
 
         signOut=view.findViewById(R.id.signOut);
@@ -291,7 +291,10 @@ public class Profile extends Fragment {
         });
 
         return view;
+
+
     }
+
 
 
 

@@ -2,12 +2,14 @@ package com.example.humanitarian_two;
 
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.print.PrintAttributes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,37 +40,40 @@ import com.google.firebase.firestore.Transaction;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 
 import jp.wasabeef.picasso.transformations.CropCircleTransformation;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
 public class Feed extends Fragment {
     Button postButton;
     TextView postText;
-    FirebaseFirestore db=FirebaseFirestore.getInstance();
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    FirebaseAuth mAuth=FirebaseAuth.getInstance();
-    FirebaseUser currentUser=mAuth.getCurrentUser();
-    Timestamp tb=new Timestamp(new Date());
-    String TAG="msg";
-    ArrayList<Post> posts=new ArrayList<Post>();
+    FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    FirebaseUser currentUser = mAuth.getCurrentUser();
+    Timestamp tb = new Timestamp(new Date());
+    String TAG = "msg";
+    ArrayList<Post> posts = new ArrayList<Post>();
     LinearLayout linearLayout;
-    ArrayList<String>userFollowing=new ArrayList<>();
+    ArrayList<String> userFollowing = new ArrayList<>();
     CollectionReference collectionRef;
-    ArrayList<String> usersUid=new ArrayList<String>();
+    ArrayList<String> usersUid = new ArrayList<String>();
     Post post;
     String currentUser_userName;
-    public void post()
-    {
+
+    public void post() {
 
         Map<String, Object> post = new HashMap<>();
         post.put("post", postText.getText().toString());
         post.put("createdAt", tb.now());
-        post.put("uid",currentUser.getUid());
-
+        post.put("uid", currentUser.getUid());
 
 
         db.collection("posts")
@@ -77,14 +82,14 @@ public class Feed extends Fragment {
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        Toast.makeText(getContext(),"Post Created", Toast.LENGTH_SHORT);
+                        Toast.makeText(getContext(), "Post Created", Toast.LENGTH_SHORT);
                         postText.setText("");
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(getContext(),"Failure in posting", Toast.LENGTH_SHORT);
+                        Toast.makeText(getContext(), "Failure in posting", Toast.LENGTH_SHORT);
                     }
                 });
     }
@@ -95,41 +100,36 @@ public class Feed extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_feed, container, false);
 
-        postButton=view.findViewById(R.id.post);
-        postText=view.findViewById(R.id.postText);
-        linearLayout=(LinearLayout)view.findViewById(R.id.feed_linearLayout);
+        postButton = view.findViewById(R.id.post);
+        postText = view.findViewById(R.id.postText);
+        linearLayout = (LinearLayout) view.findViewById(R.id.feed_linearLayout);
         usersUid.add(currentUser.getUid());
-        Log.i("current uid",usersUid.get(0));
-
+        Log.i("current uid", usersUid.get(0));
 
 
         db.collection("users").document(currentUser.getUid())
-            .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
                     if (document.exists()) {
-                        userFollowing= (ArrayList<String>)document.get("following");
-                        currentUser_userName=document.get("username").toString();
-
-
+                        userFollowing = (ArrayList<String>) document.get("following");
+                        currentUser_userName = document.get("username").toString();
+                        asd();
+                        if (userFollowing != null) {
+                            getUsersUid();
+                        }else
+                        {
+                            createPost(post);
+                        }
                     }
 
                 } else {
                     Log.d(TAG, "get failed with ", task.getException());
                 }
             }
-        }).addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                getUid();
-            }
         });
-
-
-
-
 
         //post listener
         postButton.setOnClickListener(new View.OnClickListener() {
@@ -140,102 +140,87 @@ public class Feed extends Fragment {
         });
 
 
-
         return view;
     }
 
 
-    public void getUid(){
-       if(userFollowing!=null) {
-           for (String username : userFollowing) {
-               db.collection("users")
-                       .whereEqualTo("username", username)
-                       .get()
-                       .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                           @Override
-                           public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                               if (task.isSuccessful()) {
-                                   for (QueryDocumentSnapshot document : task.getResult()) {
-
-                                       usersUid.add(document.get("uid").toString());
 
 
-                                   }
-                               } else {
-                                   Log.d(TAG, "Error getting documents: ", task.getException());
-                               }
-                           }
-                       }).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                   @Override
-                   public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                       for (String temp : usersUid) {
 
-                           db.collection("posts").limit(10).orderBy("createdAt", Query.Direction.DESCENDING)
-                                   .whereEqualTo("uid", temp)
-                                   .get()
-                                   .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                                       @Override
-                                       public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                                           if (task.isSuccessful()) {
-                                               for (QueryDocumentSnapshot document : task.getResult()) {
-                                                   post = document.toObject(Post.class);
-                                                   posts.add(post);
-                                                   if (document.get("likes") != null) {
-                                                       ArrayList<String> likes = new ArrayList<String>();
-                                                       likes = (ArrayList<String>) document.get("likes");
-                                                       createPost(post, document.getId(), likes);
-                                                   }
-                                                   createPost(post, document.getId(), null);
+    void asd(){
 
-
-                                               }
-                                           } else {
-                                               Log.d(TAG, "Error getting documents: ", task.getException());
-                                           }
-                                       }
-                                   });
-                       }
-                   }
-               });
-           }
-       }else {
-           for (String temp : usersUid) {
-
-               db.collection("posts").limit(20).orderBy("createdAt", Query.Direction.DESCENDING)
-                       .whereEqualTo("uid", temp)
-                       .get()
-                       .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                           @Override
-                           public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                               if (task.isSuccessful()) {
-                                   for (QueryDocumentSnapshot document : task.getResult()) {
-                                       post = document.toObject(Post.class);
-                                       posts.add(post);
-                                       if (document.get("likes") != null) {
-                                           ArrayList<String> likes = new ArrayList<String>();
-                                           likes = (ArrayList<String>) document.get("likes");
-                                           createPost(post, document.getId(), likes);
-                                       }
-                                       createPost(post, document.getId(), null);
-
-
-                                   }
-                               } else {
-                                   Log.d(TAG, "Error getting documents: ", task.getException());
-                               }
-                           }
-                       });
-           }
-       }
+            Log.i("usersUid", usersUid.get(usersUid.size()-1));
+            db.collection("posts").limit(10).orderBy("createdAt", Query.Direction.DESCENDING)
+                    .whereEqualTo("uid", usersUid.get(usersUid.size()-1))
+                    .get()
+                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if (task.isSuccessful()) {
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+                                    post = document.toObject(Post.class);
+                                    posts.add(post);
+                                    createPost(post);
+                                }
+                            } else {
+                                Log.d(TAG, "Error getting documents: ", task.getException());
+                            }
+                        }
+                    });
 
     }
-    public void createPost(Post post, final String postId,ArrayList<String> likes) {
-        final ImageView dp=new ImageView(getContext());
+
+
+
+    void getUsersUid() {
+
+        for (String username : userFollowing) {
+            Log.i("usernames",username);
+            db.collection("users")
+                    .whereEqualTo("username", username)
+                    .get()
+                    .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                        @Override
+                        public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                            if (task.isSuccessful()) {
+                                for (QueryDocumentSnapshot document : task.getResult()) {
+
+                                    usersUid.add(document.get("uid").toString());
+                                }
+                            } else {
+                                Log.d(TAG, "Error getting documents: ", task.getException());
+                            }
+                        }
+                    }).addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                    asd();
+                }
+            });
+        }
+
+        Arrays.sort(posts.toArray());
+        for(Post post:posts) {
+            createPost(post);
+        }
+
+    }
+
+
+
+
+    public void createPost(Post post) {
+        final ImageView dp = new ImageView(getContext());
+        final LinearLayout header = new LinearLayout(getContext());
+        header.setOrientation(LinearLayout.HORIZONTAL);
 
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(200, 200);
+        layoutParams.setMargins(10, 5, 0, 0);
         dp.setLayoutParams(layoutParams);
 
         final TextView username = new TextView(getContext());
+        username.setTextSize(25);
+        username.setTextColor(Color.BLACK);
         db.collection("users").document(post.uid)
                 .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
@@ -243,13 +228,17 @@ public class Feed extends Fragment {
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
                     if (document.exists()) {
-                        String userDisplayName=document.get("name").toString();
-                        Uri photo=currentUser.getPhotoUrl();
+
+
+                        String userDisplayName = document.get("name").toString();
+                        Uri photo = currentUser.getPhotoUrl();
                         Picasso.with(getContext()).load(photo)
                                 .transform(new CropCircleTransformation())
                                 .into(dp);
 //
                         username.setText(userDisplayName);
+                        header.addView(dp);
+                        header.addView(username);
 
                     } else {
                         Log.d(TAG, "No such document");
@@ -259,57 +248,27 @@ public class Feed extends Fragment {
                 }
             }
         });
-
         TextView postBody = new TextView(getContext());
+        postBody.setTextSize(50);
+        postBody.setTextColor(Color.BLACK);
+        TextView createdAt = new TextView(getContext());
+        Date date = post.createdAt.toDate();
+        String dateText = date.toString();
+        String[] regex = new String[0];
+        regex = dateText.split("GMT", 2);
+        createdAt.setText(regex[0]);
+        postBody.setText(post.post);
+        CardView cardView = new CardView(getContext());
+        LinearLayout.LayoutParams cardViewLayoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        cardViewLayoutParams.setMargins(5, 10, 5, 10);
+        cardView.setLayoutParams(cardViewLayoutParams);
+        LinearLayout card = new LinearLayout(getContext());
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.addView(header);
+        card.addView(postBody);
+        card.addView(createdAt);
+        cardView.addView(card);
 
-            postBody.setTextSize(50);
-            postBody.setTextColor(Color.BLACK);
-            TextView createdAt = new TextView(getContext());
-            Date date = post.createdAt.toDate();
-            String dateText = date.toString();
-            String[] regex = dateText.split("GMT", 0);
-            createdAt.setText(regex[0]);
-            postBody.setText(post.post);
-            LinearLayout card = new LinearLayout(getContext());
-            card.setOrientation(LinearLayout.VERTICAL);
-            card.setBackgroundResource(R.drawable.card);
-            card.addView(dp);
-            card.addView(username);
-            card.addView(createdAt);
-            card.addView(postBody);
-
-            //button code
-            LinearLayout buttonContainer= new LinearLayout(getContext());
-            buttonContainer.setOrientation(LinearLayout.HORIZONTAL);
-            final Button like=new Button(getContext());
-            if(likes!=null && likes.contains(currentUser_userName))
-                like.setBackgroundResource(R.drawable.ic_heartcolor);
-            else
-            like.setBackgroundResource(R.drawable.ic_heartbw);
-            like.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Map<String, Object> user = new HashMap<>();
-
-                    db.collection("posts").document(postId).update(
-                            "likes", FieldValue.arrayUnion(currentUser_userName))
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void aVoid) {
-                                    like.setBackgroundResource(R.drawable.ic_heartcolor);
-                                }
-                            });
-                }
-            });
-            Button comment=new Button(getContext());
-            Button share=new Button(getContext());
-            buttonContainer.addView(like);
-        buttonContainer.addView(comment);
-        buttonContainer.addView(share);
-        card.addView(buttonContainer);
-
-            linearLayout.addView(card);
-        }
-
-
+        linearLayout.addView(cardView);
+    }
 }

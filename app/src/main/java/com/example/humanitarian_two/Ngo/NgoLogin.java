@@ -1,4 +1,4 @@
-package com.example.humanitarian_two;
+package com.example.humanitarian_two.Ngo;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -6,12 +6,17 @@ import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputFilter;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.example.humanitarian_two.Emergency;
+import com.example.humanitarian_two.Home;
+import com.example.humanitarian_two.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -25,9 +30,12 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
-public class  NgoLogin extends AppCompatActivity {
+public class
+NgoLogin extends AppCompatActivity {
     private FirebaseAuth mAuth;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FirebaseUser currentUser=null;
@@ -66,7 +74,7 @@ public class  NgoLogin extends AppCompatActivity {
     }
 
     public void onEmergency(View view){
-        Intent intent=new Intent(this,Emergency.class);
+        Intent intent=new Intent(this, Emergency.class);
         startActivity(intent);
 
     }
@@ -209,11 +217,15 @@ public class  NgoLogin extends AppCompatActivity {
         emailLabel.setVisibility(View.INVISIBLE);
         username=findViewById(R.id.ngoUsername);
         name=findViewById(R.id.ngoName);
+        name.setFilters(new InputFilter[]{EMOJI_FILTER});
         name.setVisibility(View.INVISIBLE);
         notify.setVisibility(View.INVISIBLE);
         email=findViewById(R.id.ngoEmail);
+        email.setFilters(new InputFilter[]{EMOJI_FILTER});
         password=findViewById(R.id.password);
+        password.setFilters(new InputFilter[]{EMOJI_FILTER});
         username.setVisibility(View.INVISIBLE);
+        username.setFilters(new InputFilter[]{EMOJI_FILTER});
         submit=findViewById(R.id.submit);
         currentUser = mAuth.getCurrentUser();
         signUpButton=findViewById(R.id.signUp);
@@ -221,7 +233,44 @@ public class  NgoLogin extends AppCompatActivity {
         forgot=findViewById(R.id.forgot);
         signUpButton.setTextColor(Color.parseColor("#D3D3D3"));
 
+        email.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(!hasFocus){
+
+                    String expression = "^[\\w\\.-]+@([\\w\\-]+\\.)+[A-Z]{2,4}$";
+                    Pattern pattern = Pattern.compile(expression, Pattern.CASE_INSENSITIVE);
+                    Matcher matcher = pattern.matcher(email.getText());
+                    if(matcher.matches()){
+                        email.setError(null);
+
+                    }
+                    else
+                        email.setError("Please enter valid email");
+                }else
+                {
+                    TextView email=v.findViewById(R.id.email);
+                    email.setError(null);
+                }
+
+            }
+        });
+
+
 
 
     }
+
+    public static InputFilter EMOJI_FILTER = new InputFilter() {
+        @Override
+        public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+            for (int index = start; index < end; index++) {
+                int type = Character.getType(source.charAt(index));
+                if (type == Character.SURROGATE) {
+                    return "";
+                }
+            }
+            return null;
+        }
+    };
 }
