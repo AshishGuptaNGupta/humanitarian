@@ -8,19 +8,57 @@ import android.support.annotation.NonNull;
 import com.example.humanitarian_two.Post;
 import com.google.firebase.Timestamp;
 
- public class DonationModel implements Comparable<DonationModel>{
+import java.util.Map;
+
+public class DonationModel implements Comparable<DonationModel>{
     String description;
-    String location;
+    Map <String,Object> location;
     String ngo;
     Timestamp time;
-    String user;
+    Map<String,Object> user;
     String donationId;
     String donationType;
+    String status;
+
+    public DonationModel(String description, Map<String, Object> location, String ngo, Timestamp time, Map<String, Object> user, String donationId, String donationType, String status, String deliveryType) {
+        this.description = description;
+        this.location = location;
+        this.ngo = ngo;
+        this.time = time;
+        this.user = user;
+        this.donationId = donationId;
+        this.donationType = donationType;
+        this.status = status;
+    }
 
 
 
 
 
+    public Map<String, Object> getLocation() {
+        return location;
+    }
+
+    public void setLocation(Map<String, Object> location) {
+        this.location = location;
+    }
+
+    public Map<String, Object> getUser() {
+        return user;
+    }
+
+    public void setUser(Map<String, Object> user) {
+        this.user = user;
+    }
+
+
+     public String getStatus() {
+         return status;
+     }
+
+     public void setStatus(String status) {
+         this.status = status;
+     }
 
     public String getDescription() {
         return description;
@@ -28,14 +66,6 @@ import com.google.firebase.Timestamp;
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
     }
 
     public String getNgo() {
@@ -54,13 +84,6 @@ import com.google.firebase.Timestamp;
         this.time = tb;
     }
 
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
 
      public String getId() {
          return donationId;
@@ -83,25 +106,11 @@ import com.google.firebase.Timestamp;
 
      public DonationModel(){}
 
-     public DonationModel(String description, String location, String ngo, Timestamp tb, String user) {
-         this.description = description;
-         this.location = location;
-         this.ngo = ngo;
-         this.time = tb;
-         this.user = user;
-     }
 
-    public DonationModel(String description, String location, String ngo, Timestamp tb, String user,String donationId,String donationType) {
-        this.description = description;
-        this.location = location;
-        this.ngo = ngo;
-        this.time = tb;
-        this.user = user;
-        this.donationId=donationId;
-        this.donationType=donationType;
-    }
 
-     @Override
+
+
+    @Override
      public int compareTo(@NonNull DonationModel donation) {
          return donation.time.compareTo(this.time);
      }

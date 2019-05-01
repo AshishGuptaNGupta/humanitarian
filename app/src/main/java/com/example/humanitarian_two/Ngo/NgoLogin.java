@@ -24,6 +24,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -133,6 +134,10 @@ NgoLogin extends AppCompatActivity {
                                 user.put("uid",currentUser.getUid());
                                 user.put("username",username.getText().toString());
                                 user.put("verified",false);
+                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                        .setDisplayName(name.getText().toString())
+                                        .build();
+                                currentUser.updateProfile(profileUpdates);
                                 db.collection("ngos").document(currentUser.getUid())
                                         .set(user)
                                         .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -146,7 +151,8 @@ NgoLogin extends AppCompatActivity {
                                         }).addOnFailureListener(new OnFailureListener() {
                                     @Override
                                     public void onFailure(@NonNull Exception e) {
-                                        Log.i("doc", "fail",e);
+                                        currentUser.delete();
+                                        Log.i("doc", "fail", e);
                                     }
                                 });
                             } else {

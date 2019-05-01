@@ -3,19 +3,41 @@ package com.example.humanitarian_two;
 
 import com.google.firebase.Timestamp;
 
+import java.util.Map;
+
 public  class RequestModel{
+    public RequestModel() {
+    }
+
     String description;
+    Map<String,Object> location;
+    String ngo;
+    Timestamp time;
+    Map<String,Object> user;
     String donationId;
     String donationType;
-    String location;
-    String ngo;
-    String requestId;
     String status;
-    Timestamp time;
-    String user;
     String volunteerUid;
     String volunteerUsername;
-    String requesteeUsername;
+
+    public RequestModel(String description, Map<String, Object> location, String ngo, Timestamp time, Map<String, Object> user, String donationId, String donationType, String status, String volunteerUid, String volunteerUsername) {
+        this.description = description;
+        this.location = location;
+        this.ngo = ngo;
+        this.time = time;
+        this.user = user;
+        this.donationId = donationId;
+        this.donationType = donationType;
+        this.status = status;
+
+        this.volunteerUid = volunteerUid;
+        this.volunteerUsername = volunteerUsername;
+    }
+
+
+
+
+
 
     public String getDescription() {
         return description;
@@ -23,6 +45,38 @@ public  class RequestModel{
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Map<String, Object> getLocation() {
+        return location;
+    }
+
+    public void setLocation(Map<String, Object> location) {
+        this.location = location;
+    }
+
+    public String getNgo() {
+        return ngo;
+    }
+
+    public void setNgo(String ngo) {
+        this.ngo = ngo;
+    }
+
+    public Timestamp getTime() {
+        return time;
+    }
+
+    public void setTime(Timestamp time) {
+        this.time = time;
+    }
+
+    public Map<String, Object> getUser() {
+        return user;
+    }
+
+    public void setUser(Map<String, Object> user) {
+        this.user = user;
     }
 
     public String getDonationId() {
@@ -41,52 +95,12 @@ public  class RequestModel{
         this.donationType = donationType;
     }
 
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getNgo() {
-        return ngo;
-    }
-
-    public void setNgo(String ngo) {
-        this.ngo = ngo;
-    }
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
     public String getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public Timestamp getTime() {
-        return time;
-    }
-
-    public void setTime(Timestamp time) {
-        this.time = time;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
     }
 
     public String getVolunteerUid() {
@@ -105,32 +119,9 @@ public  class RequestModel{
         this.volunteerUsername = volunteerUsername;
     }
 
-    public String getRequesteeUsername() {
-        return requesteeUsername;
-    }
-
-    public void setRequesteeUsername(String requesteeUsername) {
-        this.requesteeUsername = requesteeUsername;
-    }
 
 
 
-    public RequestModel(){}
-
-    public RequestModel(String description, String donationId, String donationType, String location, String ngo, String requestId, String status, Timestamp time, String user, String volunteerUid, String volunteerUsername, String requesteeUsername) {
-        this.description = description;
-        this.donationId = donationId;
-        this.donationType = donationType;
-        this.location = location;
-        this.ngo = ngo;
-        this.requestId = requestId;
-        this.status = status;
-        this.time = time;
-        this.user = user;
-        this.volunteerUid = volunteerUid;
-        this.volunteerUsername = volunteerUsername;
-        this.requesteeUsername = requesteeUsername;
-    }
 
 
 

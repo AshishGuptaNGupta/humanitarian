@@ -143,6 +143,7 @@ public class Home extends AppCompatActivity {
         startService(locationService);
         FloatingActionButton fab = findViewById(R.id.fab);
 
+
         if(subject.equals("users")){
             editor.putString("subject","users");
             editor.commit();
@@ -160,6 +161,9 @@ public class Home extends AppCompatActivity {
             editor.putString("subject","ngos");
             editor.commit();
         }
+
+        //load feed
+        loadFragment(new Feed());
 
         initFCM();
 

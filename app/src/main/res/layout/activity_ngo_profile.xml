@@ -69,7 +69,7 @@
 
     <LinearLayout
         android:id="@+id/nameBox"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintBottom_toTopOf="@+id/linear2"
@@ -89,6 +89,7 @@
             android:id="@+id/namePro"
             android:layout_width="match_parent"
             android:layout_height="47dp"
+            android:layout_marginRight="5dp"
             android:inputType="textCapSentences"
             android:textColor="@color/black"
             android:textSize="24sp" />

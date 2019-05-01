@@ -47,6 +47,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -79,6 +80,9 @@ public class MedicineDonation extends FragmentActivity implements OnMapReadyCall
     ArrayList<String> ngoNames=new ArrayList<String>();
     ArrayAdapter adapter;
     Timestamp tb=new Timestamp(new Date());
+    Map<String,Object> locationHashMap=new HashMap<>();
+    Map<String,Object> userMap=new HashMap<>();
+    String currentUserUsername;
 
 
 
@@ -88,19 +92,29 @@ public class MedicineDonation extends FragmentActivity implements OnMapReadyCall
         final String descriptionText=description.getText().toString();
         final String userDisplayName=currentUser.getDisplayName();
         final String ngo=spinner.getSelectedItem().toString();
+        locationHashMap.put("address",locationText.getText().toString());
+        locationHashMap.put("lat",userLocation.getLatitude());
+        locationHashMap.put("long",userLocation.getLongitude());
+
+        userMap.put("uid",currentUser.getUid());
+        userMap.put("username",currentUserUsername);
+
         medicineDonation.put("description",description.getText().toString());
-        medicineDonation.put("location",locationText.getText().toString());
+        medicineDonation.put("location",locationHashMap);
         medicineDonation.put("ngo",spinner.getSelectedItem().toString());
-        medicineDonation.put("user",currentUser.getUid());
+        medicineDonation.put("user",userMap);
         medicineDonation.put("time",tb.now().toDate());
         medicineDonation.put("donationId",myId);
-        medicineDonation.put("donationType","food donation");
+        medicineDonation.put("donationType","medicine donation");
+        medicineDonation.put("status","inProgress");
 
 
         Map<String, Object> post = new HashMap<>();
         post.put("post", currentUser.getDisplayName()+" donated Medicine "+" to needy people ");
         post.put("createdAt", tb.now());
         post.put("uid",currentUser.getUid());
+
+
 
         WriteBatch batch = db.batch();
         db.collection("medicineDonations").document()
@@ -183,6 +197,19 @@ public class MedicineDonation extends FragmentActivity implements OnMapReadyCall
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_medicine_donation);
+
+        db.collection("users").document(currentUser.getUid()).get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if(task.isSuccessful()){
+                            DocumentSnapshot document = task.getResult();
+                            if (document.exists()) {
+                             currentUserUsername=document.get("username").toString();
+                            }
+                        }
+                    }
+                });
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);

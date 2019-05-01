@@ -77,11 +77,10 @@ public class VolunteerAdapter extends BaseAdapter {
             public void onClick(final View v) {
                 DocumentReference docRef=db.collection("volunteerRequest").document();
                 String id=docRef.getId();
-                foodDonation.put("requestId",id);
                 foodDonation.put("volunteerUid",uid.get(position));
                 foodDonation.put("volunteerUsername",names.get(position));
                 foodDonation.put("status","pending");
-                foodDonation.put("requesteeUsername",currentUser.getDisplayName());
+
                 docRef.set(foodDonation)
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override

@@ -2,6 +2,7 @@ package com.example.humanitarian_two;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +18,13 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.humanitarian_two.model.DonationModel;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.model.Document;
 import com.google.type.ColorProto;
 
 import java.util.ArrayList;
@@ -63,21 +70,34 @@ public class CustomAdapter extends BaseAdapter {
         TextView time= (TextView) rowView.findViewById(R.id.time);
         final Button received= rowView.findViewById(R.id.received);
 
-        received.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-              if(donations.get(position).getId()!=null)
-              {
-                    sendNotification(position);
-              }
+        if(donations.get(position).getStatus()!=null)
+        if(donations.get(position).getStatus().equals("complete")) {
+            received.setEnabled(false);
+            received.setText("received");
+            received.setBackgroundColor(Color.parseColor("#C0C0C0"));
+        }
+        else {
+            received.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (donations.get(position).getId() != null) {
+                        if (donations.get(position).getDonationType().equals("food donation")) {
+                            markReceived(position, received, "foodDonations");
+                        } else if (donations.get(position).getDonationType().equals("medicine donation"))
+                            markReceived(position, received, "medicineDonations");
+                        else
+                            markReceived(position, received, "ClothDonations");
+                        sendNotification(position);
+                    }
 
-            }
-        });
+                }
+            });
+        }
 
         description.setText(donations.get(position).getDescription());
         time.setText(donations.get(position).getTb().toDate().toString());
-        user.setText(donations.get(position).getUser());
-        location.setText(donations.get(position).getLocation());
+        user.setText(donations.get(position).getUser().get("username").toString());
+        location.setText(donations.get(position).getLocation().get("address").toString());
 
 
         return  rowView;
@@ -107,5 +127,28 @@ public class CustomAdapter extends BaseAdapter {
 
 // Add the request to the RequestQueue.
         queue.add(stringRequest);
+    }
+    void markReceived(int position, final View received, final String collection){
+        db.collection(collection).whereEqualTo("donationId",donations.get(position).getId())
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if(task.isSuccessful()){
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                db.collection(collection).document(document.getId())
+                                        .update("status","complete")
+                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<Void> task) {
+                                                received.setEnabled(false);
+//                                                received.setText("received");
+                                                received.setBackgroundColor(Color.parseColor("#C0C0C0"));
+                                            }
+                                        });
+                            }
+                        }
+                    }
+                });
     }
 }

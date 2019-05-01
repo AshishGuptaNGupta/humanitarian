@@ -2,7 +2,9 @@ package com.example.humanitarian_two;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
@@ -156,11 +158,15 @@ public class Notification extends FirebaseMessagingService {
         }else if(dataType.equals("volunteerRequest"))
         {
             NotificationChannelForVolunteer();
+
+            Intent intent=new Intent(getApplicationContext(),VolunteerRequest.class);
+            PendingIntent contentIntent=PendingIntent.getActivity(getApplicationContext(),11,intent,0);
             builder = new NotificationCompat.Builder(this, "volunteerRequest")
                     .setSmallIcon(R.drawable.ic_donation)
                     .setContentTitle(title)
                     .setContentText(message)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH);
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setContentIntent(contentIntent);
         }
         else if(dataType.equals("requestAccepted")||dataType.equals("donationDelivered"))
         {

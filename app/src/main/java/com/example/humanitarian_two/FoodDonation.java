@@ -49,6 +49,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -81,23 +82,33 @@ public class FoodDonation extends FragmentActivity implements OnMapReadyCallback
     ArrayList<String>ngoNames=new ArrayList<String>();
     ArrayAdapter adapter;
     Timestamp tb=new Timestamp(new Date());
-
+    Map<String,Object> locationHashMap=new HashMap<>();
+    String currentUserUsername;
+    Map<String,Object> userMap=new HashMap<>();
 
 
 
     public void onSubmit(View view){
         DocumentReference ref = db.collection("foodDonations").document();
-        String myId = ref.getId();
+         String myId = ref.getId();
         final String descriptionText=description.getText().toString();
         final String userDisplayName=user.getDisplayName();
         final String ngo=spinner.getSelectedItem().toString();
+        locationHashMap.put("address",locationText.getText().toString());
+        locationHashMap.put("lat",userLocation.getLatitude());
+        locationHashMap.put("long",userLocation.getLongitude());
+
+        userMap.put("uid",user.getUid());
+        userMap.put("username",currentUserUsername);
+
         foodDonation.put("description",description.getText().toString());
-        foodDonation.put("location",locationText.getText().toString());
+        foodDonation.put("location",locationHashMap);
         foodDonation.put("ngo",spinner.getSelectedItem().toString());
-        foodDonation.put("user",user.getUid());
+        foodDonation.put("user",userMap);
         foodDonation.put("time",tb.now().toDate());
         foodDonation.put("donationId",myId);
         foodDonation.put("donationType","food donation");
+        foodDonation.put("status","inProgress");
 
 
         Map<String, Object> post = new HashMap<>();
@@ -165,6 +176,19 @@ public class FoodDonation extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_food_donation);
+
+        db.collection("users").document(user.getUid()).get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if(task.isSuccessful()){
+                            DocumentSnapshot document = task.getResult();
+                            if (document.exists()) {
+                                currentUserUsername=document.get("username").toString();
+                            }
+                        }
+                    }
+                });
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);

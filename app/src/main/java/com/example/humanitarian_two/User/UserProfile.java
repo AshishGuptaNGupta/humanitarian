@@ -36,6 +36,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -182,9 +183,16 @@ public class UserProfile extends Fragment {
         SharedPreferences.Editor editor=sharedpreferences.edit();
         editor.clear();
         editor.commit();
-        mAuth.getInstance().signOut();
-        Intent intent=new Intent(getActivity(), MainActivity.class);
-        startActivity(intent);
+        db.collection("users").document(user.getUid()).update("token", FieldValue.delete())
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        mAuth.getInstance().signOut();
+                        Intent intent=new Intent(getActivity(), MainActivity.class);
+                        startActivity(intent);
+                    }
+                });
+
     }
 
     //    public String getRealPathFromURI(Context context, Uri contentUri) {
@@ -268,6 +276,13 @@ public class UserProfile extends Fragment {
                 }
             });
         }
+        else
+        {
+            String url="https://firebasestorage.googleapis.com/v0/b/humanitarian-dbe38.appspot.com/o/man.png?alt=media&token=f445025c-30b7-42d6-a64e-a4fe3767a4c3";
+            Picasso.with(getContext()).load(url)
+                    .transform(new CropCircleTransformation())
+                    .into(profilePic);
+        }
 
 
 
@@ -297,6 +312,7 @@ public class UserProfile extends Fragment {
 
 
     }
+
 
 
 

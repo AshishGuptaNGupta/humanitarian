@@ -23,6 +23,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -125,6 +126,10 @@ public class UserLogin extends AppCompatActivity {
                                     user.put("following", following);
                                     user.put("username", username.getText().toString());
                                     user.put("name", name.getText().toString());
+                                    UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                                            .setDisplayName(name.getText().toString())
+                                            .build();
+                                    currentUser.updateProfile(profileUpdates);
                                     db.collection("users").document(currentUser.getUid())
                                             .set(user)
                                             .addOnSuccessListener(new OnSuccessListener<Void>() {

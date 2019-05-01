@@ -62,10 +62,10 @@ class VolunteerRequestAdapter extends RecyclerView.Adapter<RequestViewHolder>
     {
 
         viewHolder.type.setText(requests.get(position).donationType);
-        viewHolder.location.setText(requests.get(position).location);
+        viewHolder.location.setText(requests.get(position).location.get("address").toString());
         viewHolder.description.setText(requests.get(position).description);
         viewHolder.ngo.setText(requests.get(position).ngo);
-        viewHolder.user.setText(requests.get(position).user);
+        viewHolder.user.setText(requests.get(position).getUser().get("username").toString());
         viewHolder.Accept.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v) {
